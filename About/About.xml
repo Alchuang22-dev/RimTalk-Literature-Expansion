@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <packageId>cj.rimtalk.godstongue</packageId>
+  <name>RimTalk_GodsTongue</name>
+  <author>juicy &amp; chuanglusss</author>
+
+  <supportedVersions>
+    <li>1.5</li>
+    <li>1.6</li>
+  </supportedVersions>
+
+  <!-- 依赖 RimTalk 主模组 -->
+  <modDependencies>
+    <li>
+      <packageId>cj.rimtalk</packageId>
+      <displayName>RimTalk</displayName>
+      <!-- 以后发 Steam 的时候填上真正的链接 -->
+      <!-- <steamWorkshopUrl>steam://url/CommunityFilePage/XXXXXXXXX</steamWorkshopUrl> -->
+    </li>
+  </modDependencies>
+
+  <!-- 确保在 RimTalk 后加载（补丁才有目标） -->
+  <loadAfter>
+    <li>cj.rimtalk</li>
+  </loadAfter>
+
+  <description>
+    Adds interaction effects to RimTalk conversations:
+    - Talking to babies increases their play need.
+    - Talking to toddlers (Toddlers Patch) gently increases play and reduces loneliness.
+    This mod is a lightweight, optional add-on on top of RimTalk.
+  </description>
+</ModMetaData>
+
+</ModMetaData>
