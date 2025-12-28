@@ -16,3 +16,25 @@
  * - Do not add behavior or logic.
  * - Do not reference RimWorld or RimTalk APIs.
  */
+using System.Runtime.Serialization;
+using RimTalk.Data;
+
+namespace RimTalk_LiteratureExpansion.authoring
+{
+    [DataContract]
+    public sealed class BookTitleSpec : IJsonData
+    {
+        [DataMember(Name = "title")]
+        public string Title { get; set; }
+
+        [DataMember(Name = "synopsis")]
+        public string Synopsis { get; set; }
+
+        public string GetText()
+        {
+            if (string.IsNullOrWhiteSpace(Title)) return Synopsis ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(Synopsis)) return Title ?? string.Empty;
+            return $"{Title}: {Synopsis}";
+        }
+    }
+}

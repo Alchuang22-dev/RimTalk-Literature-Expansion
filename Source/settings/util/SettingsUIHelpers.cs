@@ -1,0 +1,139 @@
+/*
+ * Purpose:
+ * - UI helper utilities to keep LiteratureSettingsWindow clean.
+ *
+ * Uses:
+ * - Verse.Widgets / Rect calculations
+ *
+ * Responsibilities:
+ * - Draw labeled text fields consistently.
+ * - Optionally draw password-like fields (best-effort masking).
+ * - Draw warnings (e.g., "API key is stored in config").
+ *
+ * Do NOT:
+ * - Do not depend on RimTalk UI classes unless you intentionally want to.
+ */
+using System;
+using UnityEngine;
+using RimTalk_LiteratureExpansion.settings;
+using Verse;
+
+namespace RimTalk_LiteratureExpansion.settings.util
+{
+    public static class SettingsUIHelpers
+    {
+        private const float ToggleWidth = 52f;
+        private static bool _showApiKey;
+
+        public static string TextFieldLabeled(Listing_Standard listing, string label, string value, int maxLength)
+        {
+            if (listing == null) return value ?? string.Empty;
+
+            Rect rowRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            float labelWidth = Mathf.Max(120f, rowRect.width * 0.35f);
+            Rect labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowRect.height);
+            Rect fieldRect = new Rect(labelRect.xMax + LiteratureSettingsDef.FieldGap, rowRect.y,
+                rowRect.width - labelWidth - LiteratureSettingsDef.FieldGap, rowRect.height);
+
+            var anchor = Text.Anchor;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = anchor;
+
+            value ??= string.Empty;
+            value = Widgets.TextField(fieldRect, value);
+
+            return Clamp(value, maxLength);
+        }
+
+        public static int IntFieldLabeled(Listing_Standard listing, string label, int value, int min, int max)
+        {
+            if (listing == null) return value;
+
+            Rect rowRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            float labelWidth = Mathf.Max(120f, rowRect.width * 0.35f);
+            Rect labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowRect.height);
+            Rect fieldRect = new Rect(labelRect.xMax + LiteratureSettingsDef.FieldGap, rowRect.y,
+                rowRect.width - labelWidth - LiteratureSettingsDef.FieldGap, rowRect.height);
+
+            var anchor = Text.Anchor;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = anchor;
+
+            string text = Widgets.TextField(fieldRect, value.ToString());
+            if (int.TryParse(text, out var parsed))
+                value = parsed;
+
+            if (value < min) value = min;
+            if (value > max) value = max;
+
+            return value;
+        }
+
+        public static string PasswordFieldLabeled(Listing_Standard listing, string label, string value, int maxLength)
+        {
+            if (listing == null) return value ?? string.Empty;
+
+            Rect rowRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            float labelWidth = Mathf.Max(120f, rowRect.width * 0.35f);
+            Rect labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowRect.height);
+            Rect fieldRect = new Rect(labelRect.xMax + LiteratureSettingsDef.FieldGap, rowRect.y,
+                rowRect.width - labelWidth - LiteratureSettingsDef.FieldGap - ToggleWidth, rowRect.height);
+            Rect toggleRect = new Rect(fieldRect.xMax + LiteratureSettingsDef.FieldGap, rowRect.y, ToggleWidth, rowRect.height);
+
+            var anchor = Text.Anchor;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = anchor;
+
+            value ??= string.Empty;
+
+            if (_showApiKey)
+            {
+                value = Widgets.TextField(fieldRect, value);
+            }
+            else
+            {
+                Widgets.Label(fieldRect, Mask(value));
+            }
+
+            if (Widgets.ButtonText(toggleRect, _showApiKey ? "Hide" : "Show"))
+                _showApiKey = !_showApiKey;
+
+            return Clamp(value, maxLength);
+        }
+
+        public static void DrawValidationMessages(Listing_Standard listing, string header, string[] messages)
+        {
+            if (listing == null || messages == null || messages.Length == 0) return;
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.yellow;
+            if (!string.IsNullOrWhiteSpace(header))
+                listing.Label(header);
+
+            for (int i = 0; i < messages.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(messages[i])) continue;
+                listing.Label(messages[i]);
+            }
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private static string Mask(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "(empty)";
+            int len = Math.Min(value.Length, 12);
+            return new string('*', len);
+        }
+
+        private static string Clamp(string value, int maxLength)
+        {
+            if (maxLength <= 0 || value == null) return value ?? string.Empty;
+            return value.Length > maxLength ? value.Substring(0, maxLength) : value;
+        }
+    }
+}

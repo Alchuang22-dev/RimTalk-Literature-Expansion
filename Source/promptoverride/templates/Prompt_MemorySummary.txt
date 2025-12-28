@@ -1,0 +1,9 @@
+Summarize the pawn's recent memories based on the provided context.
+Write in {{LANG}}. Return JSON only.
+
+Required JSON fields:
+- "summary": <= {{SUMMARY_MAX_CHARS}} chars and {{SUMMARY_MAX_SENTENCES}} sentences
+- "keywords": 3-6 short keywords
+- "tone": 1-2 words
+
+Use only the provided context; do not invent new events.

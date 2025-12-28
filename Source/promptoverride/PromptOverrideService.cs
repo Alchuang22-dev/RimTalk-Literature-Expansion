@@ -17,4 +17,43 @@
  * - Do not hardcode prompt text here.
  * - Do not bypass RimTalk context building.
  */
- 
+using System;
+
+namespace RimTalk_LiteratureExpansion.promptoverride
+{
+    public static class PromptOverrideService
+    {
+        private static PromptOverrideContext _current;
+
+        public static IDisposable Use(PromptOverrideContext context)
+        {
+            _current = context;
+            return new OverrideScope();
+        }
+
+        public static PromptOverrideContext Peek()
+        {
+            return _current;
+        }
+
+        public static PromptOverrideContext Consume()
+        {
+            var ctx = _current;
+            _current = null;
+            return ctx;
+        }
+
+        public static void Clear()
+        {
+            _current = null;
+        }
+
+        private sealed class OverrideScope : IDisposable
+        {
+            public void Dispose()
+            {
+                Clear();
+            }
+        }
+    }
+}

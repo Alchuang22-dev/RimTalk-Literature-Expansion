@@ -18,3 +18,39 @@
  * - Do not change Constant.Instruction globally.
  * - Do not affect unrelated TalkRequests.
  */
+using HarmonyLib;
+using RimTalk.Data;
+using RimTalk.Service;
+using RimTalk_LiteratureExpansion.integration;
+using RimTalk_LiteratureExpansion.promptoverride;
+
+namespace RimTalk_LiteratureExpansion.patches
+{
+    [HarmonyPatch(typeof(PromptService), nameof(PromptService.DecoratePrompt))]
+    public static class Patch_PromptService_Override
+    {
+        public static void Postfix(TalkRequest talkRequest)
+        {
+            if (talkRequest == null) return;
+
+            var ctx = PromptOverrideService.Consume();
+            if (ctx != null && ctx.HasOverride)
+            {
+                if (!string.IsNullOrWhiteSpace(ctx.OverridePrompt))
+                {
+                    talkRequest.Prompt = ctx.OverridePrompt;
+                }
+
+                if (!string.IsNullOrWhiteSpace(ctx.AppendPrompt))
+                {
+                    if (string.IsNullOrWhiteSpace(talkRequest.Prompt))
+                        talkRequest.Prompt = ctx.AppendPrompt;
+                    else
+                        talkRequest.Prompt = $"{talkRequest.Prompt}\n{ctx.AppendPrompt}";
+                }
+            }
+
+            TalkPromptBookInjector.InjectIfAvailable(talkRequest);
+        }
+    }
+}

@@ -14,3 +14,13 @@
  * - Do not read user settings.
  * - Do not choose model/provider.
  */
+namespace RimTalk_LiteratureExpansion.synopsis
+{
+    public static class SynopsisTokenPolicy
+    {
+        public const int TitleMaxChars = 60;
+        public const int SynopsisMaxChars = 600;
+        public const int SynopsisMaxSentences = 6;
+        public const int PromptSynopsisMaxChars = 600;
+    }
+}

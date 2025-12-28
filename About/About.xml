@@ -1,35 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <packageId>cj.rimtalk.godstongue</packageId>
-  <name>RimTalk_GodsTongue</name>
-  <author>juicy &amp; chuanglusss</author>
 
-  <supportedVersions>
-    <li>1.5</li>
-    <li>1.6</li>
-  </supportedVersions>
+	<packageId>cj.rimtalk.literature</packageId>
+	<name>RimTalk: Literature Expansion</name>
+	<author>mod author</author>
 
-  <!-- 依赖 RimTalk 主模组 -->
-  <modDependencies>
-    <li>
-      <packageId>cj.rimtalk</packageId>
-      <displayName>RimTalk</displayName>
-      <!-- 以后发 Steam 的时候填上真正的链接 -->
-      <!-- <steamWorkshopUrl>steam://url/CommunityFilePage/XXXXXXXXX</steamWorkshopUrl> -->
-    </li>
-  </modDependencies>
+	<description>
+Bring RimWorld books to life with RimTalk: Literature Expansion!
 
-  <!-- 确保在 RimTalk 后加载（补丁才有目标） -->
-  <loadAfter>
-    <li>cj.rimtalk</li>
-  </loadAfter>
+This expansion enhances in-game books by giving them meaningful titles and readable content, generated dynamically through RimTalk’s AI framework.
 
-  <description>
-    Adds interaction effects to RimTalk conversations:
-    - Talking to babies increases their play need.
-    - Talking to toddlers (Toddlers Patch) gently increases play and reduces loneliness.
-    This mod is a lightweight, optional add-on on top of RimTalk.
-  </description>
-</ModMetaData>
+Key Features:
+• Automatically repairs and normalizes book titles and descriptions
+• Generates short, localized book synopses instead of placeholder text
+• Books written by pawns reflect their personal experiences and memories
+• Reading and storytelling dialogue is based on actual book content
+• Optional compatibility with Vanilla Books Expanded and Children’s Books
+• Fully configurable and lightweight, with no impact on core gameplay
+
+The system works seamlessly in the background:
+Existing books are scanned and improved, while newly written books gain their identity the moment they are finished. When pawns read or tell stories, their conversations finally make sense in context.
+
+You may choose to reuse RimTalk’s API settings or configure a separate API specifically for literature generation.
+
+Designed to be non-intrusive, modular, and fully compatible with RimTalk’s dialogue system.
+	</description>
+
+	<supportedVersions>
+		<li>1.5</li>
+		<li>1.6</li>
+	</supportedVersions>
+
+	<modDependencies>
+		<li>
+			<packageId>cj.rimtalk</packageId>
+			<displayName>RimTalk</displayName>
+		</li>
+		<li>
+			<packageId>brrainz.harmony</packageId>
+			<displayName>Harmony</displayName>
+			<steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+			<downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+		</li>
+		<li>
+			<packageId>Jaxe.Bubbles</packageId>
+			<displayName>Interaction Bubbles</displayName>
+			<steamWorkshopUrl>steam://url/CommunityFilePage/***</steamWorkshopUrl>
+		</li>
+	</modDependencies>
+
+	<loadAfter>
+		<li>cj.rimtalk</li>
+		<li>brrainz.harmony</li>
+		<li>Jaxe.Bubbles</li>
+	</loadAfter>
+
+	<incompatibleWith>
+		<!-- No known incompatibilities -->
+	</incompatibleWith>
 
 </ModMetaData>

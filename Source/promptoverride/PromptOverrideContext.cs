@@ -15,3 +15,21 @@
  * - Do not persist this object.
  * - Do not apply overrides globally.
  */
+namespace RimTalk_LiteratureExpansion.promptoverride
+{
+    public sealed class PromptOverrideContext
+    {
+        public string OverridePrompt { get; }
+        public string AppendPrompt { get; }
+
+        public PromptOverrideContext(string overridePrompt = null, string appendPrompt = null)
+        {
+            OverridePrompt = overridePrompt;
+            AppendPrompt = appendPrompt;
+        }
+
+        public bool HasOverride =>
+            !string.IsNullOrWhiteSpace(OverridePrompt) ||
+            !string.IsNullOrWhiteSpace(AppendPrompt);
+    }
+}

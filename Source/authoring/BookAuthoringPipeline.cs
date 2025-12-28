@@ -3,14 +3,13 @@
  * - Orchestrate the book authoring pipeline when a pawn finishes writing a book.
  *
  * Uses:
- * - RimTalk AIService.Query<T>
- * - MemorySummaryRequest / BookFromSummaryRequest
+ * - IndependentBookLlmClient via MemorySummaryRequest / BookFromSummaryRequest
  * - BookSynopsisService (optional finalization)
  *
  * Flow:
  * 1) Create a TalkRequest with normal RimTalk context injection.
  * 2) Override prompt to request a structured MemorySummarySpec (JSON).
- * 3) Feed the summary into a second Query<T> to generate book title/synopsis.
+ * 3) Feed the summary into a second request to generate book title/synopsis.
  *
  * Design notes:
  * - This class coordinates steps only; no LLM prompt strings are hardcoded here.
@@ -20,3 +19,39 @@
  * - Do not call Chat/ChatStreaming.
  * - Do not write book UI fields here.
  */
+using System.Threading.Tasks;
+using RimTalk.Data;
+using RimTalk_LiteratureExpansion.authoring.llm;
+using RimTalk_LiteratureExpansion.book;
+using RimTalk_LiteratureExpansion.synopsis;
+using RimTalk_LiteratureExpansion.synopsis.model;
+using Verse;
+
+namespace RimTalk_LiteratureExpansion.authoring
+{
+    public static class BookAuthoringPipeline
+    {
+        public static async Task<BookSynopsis> GenerateAsync(BookMeta meta, Pawn author)
+        {
+            if (meta == null || author == null) return null;
+
+            var summaryRequest = MemorySummaryRequest.BuildRequest(author);
+            if (summaryRequest == null) return null;
+
+            return await GenerateFromSummaryRequestAsync(meta, author, summaryRequest);
+        }
+
+        public static async Task<BookSynopsis> GenerateFromSummaryRequestAsync(
+            BookMeta meta,
+            Pawn author,
+            TalkRequest summaryRequest)
+        {
+            if (meta == null || author == null || summaryRequest == null) return null;
+
+            var summary = await MemorySummaryRequest.QueryAsync(summaryRequest);
+            if (summary == null) return null;
+
+            return await BookSynopsisService.GenerateFromSummaryAsync(meta, author, summary, summaryRequest.Context);
+        }
+    }
+}

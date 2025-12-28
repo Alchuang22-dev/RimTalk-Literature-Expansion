@@ -18,3 +18,20 @@
  * - Do not modify RimTalk core logic.
  * - Do not assume the produced Thing is always a book.
  */
+using System.Collections.Generic;
+using HarmonyLib;
+using RimTalk_LiteratureExpansion.scanner.production;
+using RimWorld;
+using Verse;
+
+namespace RimTalk_LiteratureExpansion.patches
+{
+    [HarmonyPatch(typeof(Bill_Production), "Notify_IterationCompleted")]
+    public static class Patch_BillProduction_Finish
+    {
+        public static void Postfix(Bill_Production __instance, Pawn billDoer, List<Thing> ingredients)
+        {
+            BookProductionTracker.NotifyProduced(billDoer);
+        }
+    }
+}
