@@ -3,7 +3,7 @@
 
 	<packageId>cj.rimtalk.literature</packageId>
 	<name>RimTalk: Literature Expansion</name>
-	<author>mod author</author>
+	<author>changlusss</author>
 
 	<description>
 Bring RimWorld books to life with RimTalk: Literature Expansion!
@@ -27,7 +27,6 @@ Designed to be non-intrusive, modular, and fully compatible with RimTalk’s dia
 	</description>
 
 	<supportedVersions>
-		<li>1.5</li>
 		<li>1.6</li>
 	</supportedVersions>
 

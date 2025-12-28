@@ -21,6 +21,7 @@
  * - VBE_SkillBook
  * - CB_ChildrensBook
  * - CB_ColoringBook
+ * - MO_DefinableBook
  *
  * Do NOT:
  * - Do not try to mirror RimWorld BookOutcomeDoer hierarchy.
@@ -31,14 +32,14 @@
 namespace RimTalk_LiteratureExpansion.book
 {
     /// <summary>
-    /// 仅基于已提供源码/反编译文件能可靠识别的类型。
+    /// 仅基于已提供源码/反编译文件能可靠识别的类型
     /// </summary>
     public enum BookType
     {
         Unknown = 0,
 
         /// <summary>
-        /// Vanilla：ThingDef.HasComp<RimWorld.CompBook>() 或 Verse.Book
+        /// Vanilla：ThingDef.HasComp<RimWorld.CompBook>() Verse.Book
         /// </summary>
         VanillaBook = 1,
 
@@ -60,6 +61,11 @@ namespace RimTalk_LiteratureExpansion.book
         /// <summary>
         /// Children’s Books：ThingDef == Childrens_Books.ChildrensBookDefOf.BBLK_ColoringBook
         /// </summary>
-        CB_ColoringBook = 21
+        CB_ColoringBook = 21,
+
+        /// <summary>
+        /// Medieval Overhaul???ThingDef carries CompProperties_DefinableBook or thingClass BookWithAuthor
+        /// </summary>
+        MO_DefinableBook = 30
     }
 }

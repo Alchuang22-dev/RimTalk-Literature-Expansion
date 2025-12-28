@@ -10,13 +10,15 @@
  * - VanillaBookClassifier
  * - VBEBookClassifier
  * - ChildrensBookClassifier
+ * - MOBookClassifier
  *
  * Core logic:
  * - Accept a Verse.Thing
  * - Iterate classifiers in STRICT ORDER
  *   1. VBEBookClassifier
  *   2. ChildrensBookClassifier
- *   3. VanillaBookClassifier
+ *   3. MOBookClassifier
+ *   4. VanillaBookClassifier
  * - Return BookMeta on first match
  * - Return null if not a book
  *
@@ -34,6 +36,7 @@
 using System.Collections.Generic;
 using Verse;
 using RimTalk_LiteratureExpansion.book.children;
+using RimTalk_LiteratureExpansion.book.mo;
 using RimTalk_LiteratureExpansion.book.vanilla;
 using RimTalk_LiteratureExpansion.book.vbe;
 
@@ -59,6 +62,8 @@ namespace RimTalk_LiteratureExpansion.book
 
             // 再识别 Children’s Books（否则会被 Vanilla 泛化吃掉）
             new ChildrensBookClassifier(),
+
+            new MOBookClassifier(),
 
             // 最后 Vanilla：CompBook/Book
             new VanillaBookClassifier(),

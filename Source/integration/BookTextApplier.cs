@@ -40,13 +40,23 @@ namespace RimTalk_LiteratureExpansion.integration
             var title = string.IsNullOrWhiteSpace(synopsis.Title) ? meta.Title : synopsis.Title;
             var text = synopsis.Synopsis ?? string.Empty;
 
+            bool changed = false;
+
             if (meta.Book != null)
             {
                 ApplyToBook(meta.Book, title, text);
-                return true;
+                changed = true;
+            }
+            else
+            {
+                changed |= ApplyToThing(meta.Thing, title, text);
             }
 
-            return ApplyToThing(meta.Thing, title, text);
+            var thingWithComps = meta.Thing as ThingWithComps;
+            if (thingWithComps != null)
+                changed |= ApplyToComps(thingWithComps, title, text);
+
+            return changed;
         }
 
         private static void ApplyToBook(Book book, string title, string synopsis)
@@ -68,6 +78,45 @@ namespace RimTalk_LiteratureExpansion.integration
             changed |= TrySetString(thing, "FlavorUI", "descriptionFlavor", synopsis);
             changed |= TrySetString(thing, "DescriptionDetailed", "description", synopsis);
             return changed;
+        }
+
+        private static bool ApplyToComps(ThingWithComps thing, string title, string synopsis)
+        {
+            if (thing == null) return false;
+
+            var comps = thing.AllComps;
+            if (comps == null || comps.Count == 0) return false;
+
+            bool changed = false;
+            for (int i = 0; i < comps.Count; i++)
+            {
+                var comp = comps[i];
+                if (comp == null || !ShouldApplyToComp(comp)) continue;
+
+                changed |= TrySetString(comp, "Title", "title", title);
+                changed |= TrySetString(comp, "Label", "label", title);
+                changed |= TrySetString(comp, "BookTitle", "bookTitle", title);
+                changed |= TrySetString(comp, "BookLabel", "bookLabel", title);
+                changed |= TrySetString(comp, "Description", "description", synopsis);
+                changed |= TrySetString(comp, "DescriptionDetailed", "descriptionDetailed", synopsis);
+                changed |= TrySetString(comp, "FlavorUI", "descriptionFlavor", synopsis);
+                changed |= TrySetString(comp, "BookDescription", "bookDescription", synopsis);
+                changed |= TrySetString(comp, "BookText", "bookText", synopsis);
+            }
+
+            return changed;
+        }
+
+        private static bool ShouldApplyToComp(object comp)
+        {
+            var fullName = comp.GetType().FullName ?? string.Empty;
+            if (fullName.StartsWith("MedievalOverhaul.", StringComparison.Ordinal))
+                return true;
+
+            if (fullName.IndexOf("DefinableBook", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+
+            return false;
         }
 
         private static bool TrySetString(object target, string propertyName, string fieldName, string value)
