@@ -22,6 +22,7 @@
  */
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.scanner.queue;
+using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -33,6 +34,8 @@ namespace RimTalk_LiteratureExpansion.scanner
         public static void Scan(Map map)
         {
             if (map == null) return;
+            var settings = LiteratureMod.Settings;
+            if (settings != null && !settings.enabled) return;
 
             var cache = LiteratueSaveData.Current?.SynopsisCache;
             var things = map.listerThings?.AllThings;

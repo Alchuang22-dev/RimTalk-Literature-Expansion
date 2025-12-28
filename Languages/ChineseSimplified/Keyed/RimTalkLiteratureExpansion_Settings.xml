@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimTalkLE_Settings_Category>RimTalk 文学扩展</RimTalkLE_Settings_Category>
+  <RimTalkLE_Settings_AllowBooks>允许修改书籍</RimTalkLE_Settings_AllowBooks>
+  <RimTalkLE_Settings_AllowArt>允许修改艺术品</RimTalkLE_Settings_AllowArt>
+  <RimTalkLE_Settings_UseRimTalkApi>使用 RimTalk 的 API 设置</RimTalkLE_Settings_UseRimTalkApi>
+  <RimTalkLE_Settings_StandaloneApi>独立 API</RimTalkLE_Settings_StandaloneApi>
+  <RimTalkLE_Settings_BaseUrl>Base URL</RimTalkLE_Settings_BaseUrl>
+  <RimTalkLE_Settings_ApiKey>API Key</RimTalkLE_Settings_ApiKey>
+  <RimTalkLE_Settings_Model>模型</RimTalkLE_Settings_Model>
+  <RimTalkLE_Settings_Validation>校验</RimTalkLE_Settings_Validation>
+  <RimTalkLE_Settings_Debug>调试</RimTalkLE_Settings_Debug>
+  <RimTalkLE_Settings_TokenTarget>书籍内容目标 token 数</RimTalkLE_Settings_TokenTarget>
+  <RimTalkLE_Settings_ClearBookCache>清除书籍缓存</RimTalkLE_Settings_ClearBookCache>
+  <RimTalkLE_Settings_Show>显示</RimTalkLE_Settings_Show>
+  <RimTalkLE_Settings_Hide>隐藏</RimTalkLE_Settings_Hide>
+  <RimTalkLE_Settings_Empty>（空）</RimTalkLE_Settings_Empty>
+  <RimTalkLE_Settings_Error_BaseUrlEmpty>Base URL 为空。</RimTalkLE_Settings_Error_BaseUrlEmpty>
+  <RimTalkLE_Settings_Error_BaseUrlAbsolute>Base URL 必须为绝对地址。</RimTalkLE_Settings_Error_BaseUrlAbsolute>
+  <RimTalkLE_Settings_Error_BaseUrlScheme>Base URL 必须以 http 或 https 开头。</RimTalkLE_Settings_Error_BaseUrlScheme>
+  <RimTalkLE_Settings_Error_ApiKeyEmpty>API Key 为空。</RimTalkLE_Settings_Error_ApiKeyEmpty>
+  <RimTalkLE_Settings_Error_ModelEmpty>模型为空。</RimTalkLE_Settings_Error_ModelEmpty>
+</LanguageData>

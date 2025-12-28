@@ -1,3 +1,4 @@
+using RimTalk_LiteratureExpansion.art;
 using RimTalk_LiteratureExpansion.synopsis;
 using Verse;
 
@@ -16,6 +17,7 @@ namespace RimTalk_LiteratureExpansion
         public override void GameComponentTick()
         {
             BookSynopsisProcessor.Tick();
+            ArtDescriptionProcessor.Tick();
         }
     }
 }

@@ -14,6 +14,7 @@
  * - Do not perform network calls.
  */
 using System;
+using Verse;
 
 namespace RimTalk_LiteratureExpansion.settings.util
 {
@@ -23,20 +24,20 @@ namespace RimTalk_LiteratureExpansion.settings.util
         {
             if (string.IsNullOrWhiteSpace(baseUrl))
             {
-                error = "Base URL is empty.";
+                error = "RimTalkLE_Settings_Error_BaseUrlEmpty".Translate();
                 return false;
             }
 
             if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
             {
-                error = "Base URL must be an absolute URI.";
+                error = "RimTalkLE_Settings_Error_BaseUrlAbsolute".Translate();
                 return false;
             }
 
             if (!string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
             {
-                error = "Base URL must start with http or https.";
+                error = "RimTalkLE_Settings_Error_BaseUrlScheme".Translate();
                 return false;
             }
 
@@ -48,7 +49,7 @@ namespace RimTalk_LiteratureExpansion.settings.util
         {
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                error = "API key is empty.";
+                error = "RimTalkLE_Settings_Error_ApiKeyEmpty".Translate();
                 return false;
             }
 
@@ -60,7 +61,7 @@ namespace RimTalk_LiteratureExpansion.settings.util
         {
             if (string.IsNullOrWhiteSpace(model))
             {
-                error = "Model is empty.";
+                error = "RimTalkLE_Settings_Error_ModelEmpty".Translate();
                 return false;
             }
 

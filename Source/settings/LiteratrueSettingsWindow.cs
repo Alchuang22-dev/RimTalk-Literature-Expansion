@@ -40,31 +40,33 @@ namespace RimTalk_LiteratureExpansion.settings
             var listing = new Listing_Standard();
             listing.Begin(inRect);
 
-            listing.CheckboxLabeled("Enable literature expansion", ref settings.enabled);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowBooks".Translate(), ref settings.enabled);
             listing.Gap(6f);
-            listing.CheckboxLabeled("Use same API as RimTalk", ref settings.useRimTalkApi);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArt".Translate(), ref settings.allowArtEdits);
+            listing.Gap(6f);
+            listing.CheckboxLabeled("RimTalkLE_Settings_UseRimTalkApi".Translate(), ref settings.useRimTalkApi);
             listing.Gap(12f);
 
             if (!settings.useRimTalkApi)
             {
-                listing.Label("Standalone API");
+                listing.Label("RimTalkLE_Settings_StandaloneApi".Translate());
                 listing.Gap(4f);
 
                 settings.api.baseUrl = SettingsUIHelpers.TextFieldLabeled(
                     listing,
-                    "Base URL",
+                    "RimTalkLE_Settings_BaseUrl".Translate(),
                     settings.api.baseUrl,
                     LiteratureSettingsDef.MaxBaseUrlLength);
 
                 settings.api.apiKey = SettingsUIHelpers.PasswordFieldLabeled(
                     listing,
-                    "API Key",
+                    "RimTalkLE_Settings_ApiKey".Translate(),
                     settings.api.apiKey,
                     LiteratureSettingsDef.MaxApiKeyLength);
 
                 settings.api.model = SettingsUIHelpers.TextFieldLabeled(
                     listing,
-                    "Model",
+                    "RimTalkLE_Settings_Model".Translate(),
                     settings.api.model,
                     LiteratureSettingsDef.MaxModelLength);
 
@@ -73,23 +75,23 @@ namespace RimTalk_LiteratureExpansion.settings
                 {
                     SettingsUIHelpers.DrawValidationMessages(
                         listing,
-                        "Validation",
+                        "RimTalkLE_Settings_Validation".Translate(),
                         errors.ToArray());
                 }
             }
 
             listing.Gap(12f);
-            listing.Label("Debug");
+            listing.Label("RimTalkLE_Settings_Debug".Translate());
             listing.Gap(4f);
             settings.synopsisTokenTarget = SettingsUIHelpers.IntFieldLabeled(
                 listing,
-                "Book content target tokens",
+                "RimTalkLE_Settings_TokenTarget".Translate(),
                 settings.synopsisTokenTarget,
                 LiteratureSettingsDef.MinSynopsisTokenTarget,
                 LiteratureSettingsDef.MaxSynopsisTokenTarget);
 
             Rect buttonRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
-            if (Widgets.ButtonText(buttonRect, "Clear cached book synopses"))
+            if (Widgets.ButtonText(buttonRect, "RimTalkLE_Settings_ClearBookCache".Translate()))
             {
                 var cache = LiteratueSaveData.Current?.SynopsisCache;
                 if (cache == null)

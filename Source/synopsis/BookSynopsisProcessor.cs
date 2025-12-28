@@ -5,6 +5,7 @@ using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.authoring.llm;
 using RimTalk_LiteratureExpansion.integration;
 using RimTalk_LiteratureExpansion.scanner.queue;
+using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimTalk_LiteratureExpansion.synopsis.model;
@@ -19,6 +20,9 @@ namespace RimTalk_LiteratureExpansion.synopsis
 
         public static void Tick()
         {
+            var settings = LiteratureMod.Settings;
+            if (settings != null && !settings.enabled) return;
+
             if (_processing) return;
             if (AIService.IsBusy()) return;
             if (!PendingBookQueue.TryDequeue(out var record)) return;
@@ -63,7 +67,7 @@ namespace RimTalk_LiteratureExpansion.synopsis
 
                     if (record.HasAuthor && summaryRequest != null)
                     {
-                        Log.Message($"[RimTalk LE] Prepare Generating from author memories for {record.Meta.DefName}.");
+                        //Log.Message($"[RimTalk LE] Prepare Generating from author memories for {record.Meta.DefName}.");
                         synopsis = await BookAuthoringPipeline.GenerateFromSummaryRequestAsync(
                             record.Meta,
                             record.Author,
@@ -72,7 +76,7 @@ namespace RimTalk_LiteratureExpansion.synopsis
 
                     if (synopsis == null)
                     {
-                        Log.Message($"[RimTalk LE] Prepare Generating synopsis via LLM for {record.Meta.DefName}.");
+                        //Log.Message($"[RimTalk LE] Prepare Generating synopsis via LLM for {record.Meta.DefName}.");
                         synopsis = await BookSynopsisService.GetOrGenerateAsync(record.Meta, contextPawn);
                     }
 
@@ -80,14 +84,14 @@ namespace RimTalk_LiteratureExpansion.synopsis
                     {
                         cache.Set(record.Key, new BookSynopsisRecord(synopsis, record.Meta.Type));
                         BookTextApplier.Apply(record.Meta, synopsis);
-                        Log.Message($"[RimTalk LE] Saved synopsis for {record.Meta.DefName}.");
+                        //Log.Message($"[RimTalk LE] Saved synopsis for {record.Meta.DefName}.");
                         return;
                     }
 
                     if (record.Attempts < MaxAttempts)
                     {
-                        Log.Message($"[RimTalk LE] LLM returned null for {record.Meta.DefName}.");
-                        Log.Message($"[RimTalk LE] Synopsis generation failed; requeue {record.Meta.DefName} (attempt {record.Attempts}).");
+                        //Log.Message($"[RimTalk LE] LLM returned null for {record.Meta.DefName}.");
+                        //Log.Message($"[RimTalk LE] Synopsis generation failed; requeue {record.Meta.DefName} (attempt {record.Attempts}).");
                         PendingBookQueue.Requeue(record);
                     }
                 }

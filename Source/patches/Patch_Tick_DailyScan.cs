@@ -5,6 +5,7 @@
  * Uses:
  * - RimWorld tick system
  * - BookScanScheduler
+ * - ArtScanScheduler
  *
  * Responsibilities:
  * - Delegate timing decisions to scheduler.
@@ -28,6 +29,7 @@ namespace RimTalk_LiteratureExpansion.patches
         public static void Postfix()
         {
             BookScanScheduler.TryDailyScan();
+            ArtScanScheduler.TryDailyScan();
         }
     }
 }

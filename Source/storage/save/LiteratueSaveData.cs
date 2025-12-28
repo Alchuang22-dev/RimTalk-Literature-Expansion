@@ -23,6 +23,7 @@ namespace RimTalk_LiteratureExpansion.storage.save
     public sealed class LiteratueSaveData : WorldComponent
     {
         public BookSynopsisCache SynopsisCache = new BookSynopsisCache();
+        public ArtDescriptionCache ArtCache = new ArtDescriptionCache();
 
         public LiteratueSaveData(World world) : base(world)
         {
@@ -32,11 +33,14 @@ namespace RimTalk_LiteratureExpansion.storage.save
         {
             base.ExposeData();
             Scribe_Deep.Look(ref SynopsisCache, "synopsisCache");
+            Scribe_Deep.Look(ref ArtCache, "artCache");
             if (Scribe.mode == LoadSaveMode.PostLoadInit && SynopsisCache == null)
                 SynopsisCache = new BookSynopsisCache();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && ArtCache == null)
+                ArtCache = new ArtDescriptionCache();
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                Log.Message($"[RimTalk LE] Literature data loaded. Cached synopses: {SynopsisCache?.Count ?? 0}.");
+                Log.Message($"[RimTalk LE] Literature data loaded. Cached synopses: {SynopsisCache?.Count ?? 0}, art: {ArtCache?.Count ?? 0}.");
         }
 
         public static LiteratueSaveData Current => Find.World?.GetComponent<LiteratueSaveData>();

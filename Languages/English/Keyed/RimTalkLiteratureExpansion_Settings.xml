@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimTalkLE_Settings_Category>RimTalk Literature Expansion</RimTalkLE_Settings_Category>
+  <RimTalkLE_Settings_AllowBooks>Allow book edits</RimTalkLE_Settings_AllowBooks>
+  <RimTalkLE_Settings_AllowArt>Allow art edits</RimTalkLE_Settings_AllowArt>
+  <RimTalkLE_Settings_UseRimTalkApi>Use same API as RimTalk</RimTalkLE_Settings_UseRimTalkApi>
+  <RimTalkLE_Settings_StandaloneApi>Standalone API</RimTalkLE_Settings_StandaloneApi>
+  <RimTalkLE_Settings_BaseUrl>Base URL</RimTalkLE_Settings_BaseUrl>
+  <RimTalkLE_Settings_ApiKey>API Key</RimTalkLE_Settings_ApiKey>
+  <RimTalkLE_Settings_Model>Model</RimTalkLE_Settings_Model>
+  <RimTalkLE_Settings_Validation>Validation</RimTalkLE_Settings_Validation>
+  <RimTalkLE_Settings_Debug>Debug</RimTalkLE_Settings_Debug>
+  <RimTalkLE_Settings_TokenTarget>Book content target tokens</RimTalkLE_Settings_TokenTarget>
+  <RimTalkLE_Settings_ClearBookCache>Clear cached book synopses</RimTalkLE_Settings_ClearBookCache>
+  <RimTalkLE_Settings_Show>Show</RimTalkLE_Settings_Show>
+  <RimTalkLE_Settings_Hide>Hide</RimTalkLE_Settings_Hide>
+  <RimTalkLE_Settings_Empty>(empty)</RimTalkLE_Settings_Empty>
+  <RimTalkLE_Settings_Error_BaseUrlEmpty>Base URL is empty.</RimTalkLE_Settings_Error_BaseUrlEmpty>
+  <RimTalkLE_Settings_Error_BaseUrlAbsolute>Base URL must be an absolute URI.</RimTalkLE_Settings_Error_BaseUrlAbsolute>
+  <RimTalkLE_Settings_Error_BaseUrlScheme>Base URL must start with http or https.</RimTalkLE_Settings_Error_BaseUrlScheme>
+  <RimTalkLE_Settings_Error_ApiKeyEmpty>API key is empty.</RimTalkLE_Settings_Error_ApiKeyEmpty>
+  <RimTalkLE_Settings_Error_ModelEmpty>Model is empty.</RimTalkLE_Settings_Error_ModelEmpty>
+</LanguageData>

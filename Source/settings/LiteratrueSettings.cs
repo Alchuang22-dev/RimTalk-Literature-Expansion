@@ -6,8 +6,9 @@
  * - Verse.ModSettings / IExposable
  *
  * Fields:
- * - enabled: master switch
+ * - enabled: allow book edits
  * - useRimTalkApi: if true, reuse RimTalk Settings_Api / ApiConfig at runtime
+ * - allowArtEdits: allow art description edits
  *
  * Responsibilities:
  * - ExposeData() for save/load of settings.
@@ -26,6 +27,7 @@ namespace RimTalk_LiteratureExpansion.settings
         public bool useRimTalkApi = true;
         public LiteratureSettingsApi api = new LiteratureSettingsApi();
         public int synopsisTokenTarget = LiteratureSettingsDef.DefaultSynopsisTokenTarget;
+        public bool allowArtEdits = false;
 
         public override void ExposeData()
         {
@@ -34,6 +36,7 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Values.Look(ref useRimTalkApi, "useRimTalkApi", true);
             Scribe_Deep.Look(ref api, "api");
             Scribe_Values.Look(ref synopsisTokenTarget, "synopsisTokenTarget", LiteratureSettingsDef.DefaultSynopsisTokenTarget);
+            Scribe_Values.Look(ref allowArtEdits, "allowArtEdits", false);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && api == null)
                 api = new LiteratureSettingsApi();

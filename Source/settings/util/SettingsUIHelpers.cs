@@ -98,7 +98,7 @@ namespace RimTalk_LiteratureExpansion.settings.util
                 Widgets.Label(fieldRect, Mask(value));
             }
 
-            if (Widgets.ButtonText(toggleRect, _showApiKey ? "Hide" : "Show"))
+            if (Widgets.ButtonText(toggleRect, _showApiKey ? "RimTalkLE_Settings_Hide".Translate() : "RimTalkLE_Settings_Show".Translate()))
                 _showApiKey = !_showApiKey;
 
             return Clamp(value, maxLength);
@@ -125,7 +125,7 @@ namespace RimTalk_LiteratureExpansion.settings.util
 
         private static string Mask(string value)
         {
-            if (string.IsNullOrEmpty(value)) return "(empty)";
+            if (string.IsNullOrEmpty(value)) return "RimTalkLE_Settings_Empty".Translate();
             int len = Math.Min(value.Length, 12);
             return new string('*', len);
         }

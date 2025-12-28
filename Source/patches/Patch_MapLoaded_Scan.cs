@@ -5,6 +5,7 @@
  * Uses:
  * - RimWorld Map lifecycle
  * - BookScanScheduler / MapBookScanner
+ * - ArtScanScheduler / MapArtScanner
  *
  * Responsibilities:
  * - Ensure existing books are discovered after load.
@@ -28,6 +29,7 @@ namespace RimTalk_LiteratureExpansion.patches
         public static void Postfix(Map __instance)
         {
             BookScanScheduler.OnMapLoaded(__instance);
+            ArtScanScheduler.OnMapLoaded(__instance);
         }
     }
 }

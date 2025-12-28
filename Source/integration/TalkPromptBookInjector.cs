@@ -27,6 +27,7 @@ using System.Text;
 using RimTalk.Data;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.scanner.queue;
+using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimTalk_LiteratureExpansion.synopsis;
@@ -42,6 +43,8 @@ namespace RimTalk_LiteratureExpansion.integration
         public static void InjectIfAvailable(TalkRequest request)
         {
             if (request == null) return;
+            var settings = LiteratureMod.Settings;
+            if (settings != null && !settings.enabled) return;
 
             BookMeta meta = null;
             if (!TryResolveBookMeta(request.Initiator, out meta) &&

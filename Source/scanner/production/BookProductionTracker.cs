@@ -18,6 +18,7 @@
  */
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.scanner.queue;
+using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -29,6 +30,8 @@ namespace RimTalk_LiteratureExpansion.scanner.production
         public static void NotifyProduced(Pawn worker)
         {
             if (worker == null || worker.Map == null) return;
+            var settings = LiteratureMod.Settings;
+            if (settings != null && !settings.enabled) return;
 
             var cache = LiteratueSaveData.Current?.SynopsisCache;
             var map = worker.Map;
