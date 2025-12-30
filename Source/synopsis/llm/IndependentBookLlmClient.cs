@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using RimTalk;
 using RimTalk.Data;
 using RimTalk.Util;
+using RimTalk_LiteratureExpansion.settings;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.synopsis.llm
@@ -17,12 +18,35 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
     public static class IndependentBookLlmClient
     {
         private const int TimeoutMs = 120000;
+        private const int MinOutputTokens = 512;
+        private const int MaxOutputTokensCap = 2048;
+        private const int OutputTokenOverhead = 120;
+        private const string Player2LocalBaseUrl = "http://localhost:4315/v1";
+        private const string Player2LocalHealthUrl = "http://localhost:4315/v1/health";
+        private const string Player2LocalLoginUrl = "http://localhost:4315/v1/login/web/019a8368-b00b-72bc-b367-2825079dc6fb";
+        private const int Player2LocalHealthTimeoutMs = 2000;
+        private const int Player2LocalLoginTimeoutMs = 3000;
+        private static string _player2LocalKey;
+        private static DateTime _player2LocalKeyCheckedAt = DateTime.MinValue;
+        private static readonly TimeSpan Player2LocalCheckInterval = TimeSpan.FromSeconds(30);
         private static int _requestId;
         private static readonly Regex OpenAIResponseRegex = new Regex(
             @"""content""\s*:\s*""((?:\\.|[^""])*)""",
             RegexOptions.Compiled | RegexOptions.Singleline);
         private static readonly Regex GoogleResponseRegex = new Regex(
             @"""text""\s*:\s*""((?:\\.|[^""])*)""",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex OpenAIFinishReasonRegex = new Regex(
+            @"""finish_reason""\s*:\s*""([^""]*)""",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex GoogleFinishReasonRegex = new Regex(
+            @"""finishReason""\s*:\s*""([^""]*)""",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex OpenAIUsageRegex = new Regex(
+            @"""usage""\s*:\s*\{[^}]*?""prompt_tokens""\s*:\s*(\d+)[^}]*?""completion_tokens""\s*:\s*(\d+)[^}]*?""total_tokens""\s*:\s*(\d+)",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex GoogleUsageRegex = new Regex(
+            @"""usageMetadata""\s*:\s*\{[^}]*?""promptTokenCount""\s*:\s*(\d+)[^}]*?""candidatesTokenCount""\s*:\s*(\d+)[^}]*?""totalTokenCount""\s*:\s*(\d+)",
             RegexOptions.Compiled | RegexOptions.Singleline);
 
         public static async Task<T> QueryJsonAsync<T>(TalkRequest request) where T : class, IJsonData
@@ -44,7 +68,23 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 return null;
             }
 
+            string apiKey = config.ApiKey;
+            bool usePlayer2Local = false;
+
+            if (config.Provider == AIProvider.Player2 && string.IsNullOrWhiteSpace(apiKey))
+            {
+                apiKey = await TryResolvePlayer2LocalKeyAsync(requestId);
+                usePlayer2Local = !string.IsNullOrWhiteSpace(apiKey);
+                if (!usePlayer2Local)
+                {
+                    Log.Warning($"[RimTalk LE] [Req {requestId}] Player2 API key is empty and no local app detected.");
+                    return null;
+                }
+            }
+
             string endpoint = ResolveEndpoint(config, model);
+            if (config.Provider == AIProvider.Player2 && usePlayer2Local)
+                endpoint = $"{Player2LocalBaseUrl}/chat/completions";
             if (string.IsNullOrWhiteSpace(endpoint))
             {
                 Log.Warning($"[RimTalk LE] [Req {requestId}] Missing endpoint for independent book request.");
@@ -56,14 +96,16 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 Log.Message($"[RimTalk LE] [Req {requestId}] Independent LLM request start.");
                 Log.Message($"[RimTalk LE] [Req {requestId}] Provider: {config.Provider}, Model: {model}");
                 Log.Message($"[RimTalk LE] [Req {requestId}] Endpoint: {SanitizeEndpoint(config.Provider, endpoint)}");
-                Log.Message($"[RimTalk LE] [Req {requestId}] API key: {SanitizeApiKey(config.ApiKey)}");
-                if (string.IsNullOrWhiteSpace(config.ApiKey) && config.Provider != AIProvider.Google)
+                Log.Message($"[RimTalk LE] [Req {requestId}] API key: {SanitizeApiKey(apiKey)}");
+                if (string.IsNullOrWhiteSpace(apiKey) && config.Provider != AIProvider.Google)
                     Log.Warning($"[RimTalk LE] [Req {requestId}] API key is empty.");
 
-                string json = BuildRequestJson(config.Provider, model, request.Context, request.Prompt);
+                int maxTokens = ResolveMaxOutputTokens();
+                Log.Message($"[RimTalk LE] [Req {requestId}] Request max tokens: {maxTokens}");
+                string json = BuildRequestJson(config.Provider, model, request.Context, request.Prompt, maxTokens);
                 Log.Message($"[RimTalk LE] [Req {requestId}] Request payload length: {json?.Length ?? 0}");
 
-                string responseText = await PostJsonAsync(requestId, endpoint, json, config.ApiKey, config.Provider == AIProvider.Google);
+                string responseText = await PostJsonAsync(requestId, endpoint, json, apiKey, config.Provider == AIProvider.Google);
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
                     Log.Warning($"[RimTalk LE] [Req {requestId}] Empty response from independent book request.");
@@ -71,6 +113,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 }
 
                 Log.Message($"[RimTalk LE] [Req {requestId}] Response length: {responseText.Length}");
+                LogResponseMeta(config.Provider, responseText, requestId);
                 string content = ExtractContent(config.Provider, responseText, requestId);
                 if (string.IsNullOrWhiteSpace(content))
                 {
@@ -173,7 +216,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             return trimmed;
         }
 
-        private static string BuildRequestJson(AIProvider provider, string model, string context, string prompt)
+        private static string BuildRequestJson(AIProvider provider, string model, string context, string prompt, int maxTokens)
         {
             if (provider == AIProvider.Google)
             {
@@ -184,7 +227,11 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 var request = new GeminiRequest
                 {
                     Contents = new[] { new GeminiContent { Parts = new[] { new GeminiPart { Text = combined } } } },
-                    GenerationConfig = new GeminiGenerationConfig { Temperature = 0.7f, MaxOutputTokens = 512 }
+                    GenerationConfig = new GeminiGenerationConfig
+                    {
+                        Temperature = 0.7f,
+                        MaxOutputTokens = maxTokens
+                    }
                 };
 
                 return JsonUtil.SerializeToJson(request);
@@ -201,8 +248,14 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 Model = model,
                 Messages = messages,
                 Temperature = 0.7f,
-                MaxTokens = 512
+                MaxTokens = maxTokens
             };
+
+            if (provider == AIProvider.Custom)
+            {
+                openAiRequest.MaxOutputTokens = maxTokens;
+                openAiRequest.MaxCompletionTokens = maxTokens;
+            }
 
             return JsonUtil.SerializeToJson(openAiRequest);
         }
@@ -323,13 +376,91 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             return endpoint.Substring(0, keyIndex + 4) + "***";
         }
 
+        private static async Task<string> TryResolvePlayer2LocalKeyAsync(int requestId)
+        {
+            if (!string.IsNullOrWhiteSpace(_player2LocalKey))
+                return _player2LocalKey;
+
+            var now = DateTime.UtcNow;
+            if (now - _player2LocalKeyCheckedAt < Player2LocalCheckInterval)
+                return null;
+
+            _player2LocalKeyCheckedAt = now;
+
+            if (!await IsPlayer2LocalHealthyAsync(requestId))
+                return null;
+
+            var localKey = await RequestPlayer2LocalKeyAsync(requestId);
+            if (!string.IsNullOrWhiteSpace(localKey))
+            {
+                _player2LocalKey = localKey;
+                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local app authenticated.");
+            }
+
+            return _player2LocalKey;
+        }
+
+        private static async Task<bool> IsPlayer2LocalHealthyAsync(int requestId)
+        {
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create(Player2LocalHealthUrl);
+                request.Method = "GET";
+                request.Timeout = Player2LocalHealthTimeoutMs;
+
+                using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                    return response.StatusCode == HttpStatusCode.OK;
+            }
+            catch (Exception ex)
+            {
+                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local health check failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static async Task<string> RequestPlayer2LocalKeyAsync(int requestId)
+        {
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create(Player2LocalLoginUrl);
+                request.Method = "POST";
+                request.ContentType = "application/json";
+                request.Timeout = Player2LocalLoginTimeoutMs;
+
+                byte[] bodyRaw = Encoding.UTF8.GetBytes("{}");
+                request.ContentLength = bodyRaw.Length;
+
+                using (var stream = await request.GetRequestStreamAsync())
+                {
+                    await stream.WriteAsync(bodyRaw, 0, bodyRaw.Length);
+                }
+
+                using (var response = (HttpWebResponse)await request.GetResponseAsync())
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                {
+                    string text = await reader.ReadToEndAsync();
+                    var auth = JsonUtil.DeserializeFromJson<Player2LocalAuthResponse>(text);
+                    return auth?.ApiKey ?? string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local login failed: {ex.Message}");
+                return null;
+            }
+
+            return null;
+        }
+
         [DataContract]
         private sealed class OpenAIRequest
         {
             [DataMember(Name = "model")] public string Model;
             [DataMember(Name = "messages")] public OpenAIMessage[] Messages;
             [DataMember(Name = "temperature", EmitDefaultValue = false)] public float Temperature;
-            [DataMember(Name = "max_tokens", EmitDefaultValue = false)] public int MaxTokens;
+            [DataMember(Name = "max_tokens", EmitDefaultValue = false)] public int? MaxTokens;
+            [DataMember(Name = "max_output_tokens", EmitDefaultValue = false)] public int? MaxOutputTokens;
+            [DataMember(Name = "max_completion_tokens", EmitDefaultValue = false)] public int? MaxCompletionTokens;
         }
 
         [DataContract]
@@ -363,6 +494,70 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         {
             [DataMember(Name = "temperature")] public float Temperature;
             [DataMember(Name = "maxOutputTokens")] public int MaxOutputTokens;
+        }
+
+        [DataContract]
+        private sealed class Player2LocalAuthResponse
+        {
+            [DataMember(Name = "p2Key")] public string ApiKey;
+        }
+
+
+        private static int ResolveMaxOutputTokens()
+        {
+            var settings = LiteratureMod.Settings;
+            int target = settings?.synopsisTokenTarget ?? LiteratureSettingsDef.DefaultSynopsisTokenTarget;
+            int maxTokens = target + LiteratureSettingsDef.StoryTokenBonus + OutputTokenOverhead;
+            if (maxTokens < MinOutputTokens) maxTokens = MinOutputTokens;
+            if (maxTokens > MaxOutputTokensCap) maxTokens = MaxOutputTokensCap;
+            return maxTokens;
+        }
+
+        private static void LogResponseMeta(AIProvider provider, string responseText, int requestId)
+        {
+            if (string.IsNullOrWhiteSpace(responseText)) return;
+
+            string finishReason = null;
+            if (provider == AIProvider.Google)
+            {
+                var match = GoogleFinishReasonRegex.Match(responseText);
+                if (match.Success) finishReason = match.Groups[1].Value;
+            }
+            else
+            {
+                var match = OpenAIFinishReasonRegex.Match(responseText);
+                if (match.Success) finishReason = match.Groups[1].Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(finishReason))
+                Log.Message($"[RimTalk LE] [Req {requestId}] finish_reason: {finishReason}");
+
+            if (provider == AIProvider.Google)
+            {
+                if (TryParseUsage(GoogleUsageRegex, responseText, out var prompt, out var completion, out var total))
+                    Log.Message($"[RimTalk LE] [Req {requestId}] token usage: prompt={prompt}, completion={completion}, total={total}");
+            }
+            else
+            {
+                if (TryParseUsage(OpenAIUsageRegex, responseText, out var prompt, out var completion, out var total))
+                    Log.Message($"[RimTalk LE] [Req {requestId}] token usage: prompt={prompt}, completion={completion}, total={total}");
+            }
+        }
+
+        private static bool TryParseUsage(Regex regex, string text, out int prompt, out int completion, out int total)
+        {
+            prompt = 0;
+            completion = 0;
+            total = 0;
+
+            if (regex == null || string.IsNullOrWhiteSpace(text)) return false;
+
+            var match = regex.Match(text);
+            if (!match.Success || match.Groups.Count < 4) return false;
+
+            return int.TryParse(match.Groups[1].Value, out prompt) &&
+                   int.TryParse(match.Groups[2].Value, out completion) &&
+                   int.TryParse(match.Groups[3].Value, out total);
         }
     }
 }
