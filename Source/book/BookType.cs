@@ -22,6 +22,7 @@
  * - CB_ChildrensBook
  * - CB_ColoringBook
  * - MO_DefinableBook
+ * - Journal
  *
  * Do NOT:
  * - Do not try to mirror RimWorld BookOutcomeDoer hierarchy.
@@ -42,6 +43,11 @@ namespace RimTalk_LiteratureExpansion.book
         /// Vanilla：ThingDef.HasComp<RimWorld.CompBook>() Verse.Book
         /// </summary>
         VanillaBook = 1,
+
+        /// <summary>
+        /// RimTalk LE: ThingDef has JournalBookExtension
+        /// </summary>
+        Journal = 2,
 
         /// <summary>
         /// VBE：VanillaBooksExpanded.Newspaper : Verse.Book

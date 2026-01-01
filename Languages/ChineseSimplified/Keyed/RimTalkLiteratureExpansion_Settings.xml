@@ -20,4 +20,10 @@
   <RimTalkLE_Settings_Error_BaseUrlScheme>Base URL 必须以 http 或 https 开头。</RimTalkLE_Settings_Error_BaseUrlScheme>
   <RimTalkLE_Settings_Error_ApiKeyEmpty>API Key 为空。</RimTalkLE_Settings_Error_ApiKeyEmpty>
   <RimTalkLE_Settings_Error_ModelEmpty>模型为空。</RimTalkLE_Settings_Error_ModelEmpty>
+  <RimTalkLE_FloatMenu_WriteJournal>写日记</RimTalkLE_FloatMenu_WriteJournal>
+  <RimTalkLE_FloatMenu_WriteJournalMissingLogs>写日记（需要1个原木）</RimTalkLE_FloatMenu_WriteJournalMissingLogs>
+  <RimTalkLE_FloatMenu_WriteJournalNoPath>写日记（无可达路径）</RimTalkLE_FloatMenu_WriteJournalNoPath>
+  <RimTalkLE_JournalPlaceholderTitle>{0}的日记</RimTalkLE_JournalPlaceholderTitle>
+  <RimTalkLE_JournalPlaceholderText>{0}的日记条目，墨迹尚未干。</RimTalkLE_JournalPlaceholderText>
+  <RimTalkLE_JournalAuthorLine>作者：{0}</RimTalkLE_JournalAuthorLine>
 </LanguageData>

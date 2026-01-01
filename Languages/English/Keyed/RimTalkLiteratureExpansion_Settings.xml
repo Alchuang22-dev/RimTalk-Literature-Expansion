@@ -20,4 +20,10 @@
   <RimTalkLE_Settings_Error_BaseUrlScheme>Base URL must start with http or https.</RimTalkLE_Settings_Error_BaseUrlScheme>
   <RimTalkLE_Settings_Error_ApiKeyEmpty>API key is empty.</RimTalkLE_Settings_Error_ApiKeyEmpty>
   <RimTalkLE_Settings_Error_ModelEmpty>Model is empty.</RimTalkLE_Settings_Error_ModelEmpty>
+  <RimTalkLE_FloatMenu_WriteJournal>Write journal</RimTalkLE_FloatMenu_WriteJournal>
+  <RimTalkLE_FloatMenu_WriteJournalMissingLogs>Write journal (need 1 wood log)</RimTalkLE_FloatMenu_WriteJournalMissingLogs>
+  <RimTalkLE_FloatMenu_WriteJournalNoPath>Write journal (no path)</RimTalkLE_FloatMenu_WriteJournalNoPath>
+  <RimTalkLE_JournalPlaceholderTitle>{0}'s journal</RimTalkLE_JournalPlaceholderTitle>
+  <RimTalkLE_JournalPlaceholderText>Diary entry by {0}. The ink is still drying.</RimTalkLE_JournalPlaceholderText>
+  <RimTalkLE_JournalAuthorLine>Author: {0}</RimTalkLE_JournalAuthorLine>
 </LanguageData>

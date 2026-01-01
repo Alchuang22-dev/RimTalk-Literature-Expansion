@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 using RimTalk.Service;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.authoring.llm;
+using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.integration;
+using RimTalk_LiteratureExpansion.journal;
 using RimTalk_LiteratureExpansion.scanner.queue;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
@@ -68,10 +70,20 @@ namespace RimTalk_LiteratureExpansion.synopsis
                     if (record.HasAuthor && summaryRequest != null)
                     {
                         //Log.Message($"[RimTalk LE] Prepare Generating from author memories for {record.Meta.DefName}.");
-                        synopsis = await BookAuthoringPipeline.GenerateFromSummaryRequestAsync(
-                            record.Meta,
-                            record.Author,
-                            summaryRequest);
+                        if (record.Meta.Type == BookType.Journal)
+                        {
+                            synopsis = await JournalAuthoringPipeline.GenerateFromSummaryRequestAsync(
+                                record.Meta,
+                                record.Author,
+                                summaryRequest);
+                        }
+                        else
+                        {
+                            synopsis = await BookAuthoringPipeline.GenerateFromSummaryRequestAsync(
+                                record.Meta,
+                                record.Author,
+                                summaryRequest);
+                        }
                     }
 
                     if (synopsis == null)

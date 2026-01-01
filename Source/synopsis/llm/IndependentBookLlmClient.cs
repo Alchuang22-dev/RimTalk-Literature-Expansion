@@ -497,7 +497,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         [DataContract]
         private sealed class Player2LocalAuthResponse
         {
-            [DataMember(Name = "p2Key")] public string ApiKey;
+            [DataMember(Name = "p2Key")] public string ApiKey = string.Empty;
         }
 
 

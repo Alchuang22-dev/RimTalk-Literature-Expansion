@@ -45,7 +45,8 @@ Constraints:
 - If benefits imply training, write practical task-style instructions and examples.
 - If type is CB_ChildrensBook or CB_ColoringBook: gentle, simple story/activity.
 - If type is VBE_Newspaper: brief news bulletin using any provided time fields.
-- If type is VBE_SkillBook or benefits imply training: practical guide tone.";
+- If type is VBE_SkillBook or benefits imply training: practical guide tone.
+- If type is Journal: first-person diary entry style.";
         }
 
         public static string BuildContext(BookMeta meta)
