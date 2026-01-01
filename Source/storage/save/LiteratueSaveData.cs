@@ -24,6 +24,8 @@ namespace RimTalk_LiteratureExpansion.storage.save
     {
         public BookSynopsisCache SynopsisCache = new BookSynopsisCache();
         public ArtDescriptionCache ArtCache = new ArtDescriptionCache();
+        public int NextAllyDiplomacyTick = -1;
+        public int NextFamilyLetterTick = -1;
 
         public LiteratueSaveData(World world) : base(world)
         {
@@ -34,6 +36,8 @@ namespace RimTalk_LiteratureExpansion.storage.save
             base.ExposeData();
             Scribe_Deep.Look(ref SynopsisCache, "synopsisCache");
             Scribe_Deep.Look(ref ArtCache, "artCache");
+            Scribe_Values.Look(ref NextAllyDiplomacyTick, "nextAllyDiplomacyTick", -1);
+            Scribe_Values.Look(ref NextFamilyLetterTick, "nextFamilyLetterTick", -1);
             if (Scribe.mode == LoadSaveMode.PostLoadInit && SynopsisCache == null)
                 SynopsisCache = new BookSynopsisCache();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && ArtCache == null)

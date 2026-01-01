@@ -26,4 +26,12 @@
   <RimTalkLE_JournalPlaceholderTitle>{0}'s journal</RimTalkLE_JournalPlaceholderTitle>
   <RimTalkLE_JournalPlaceholderText>Diary entry by {0}. The ink is still drying.</RimTalkLE_JournalPlaceholderText>
   <RimTalkLE_JournalAuthorLine>Author: {0}</RimTalkLE_JournalAuthorLine>
+  <RimTalkLE_Letter_AllyDiplomacy_Label>Diplomatic dispatch</RimTalkLE_Letter_AllyDiplomacy_Label>
+  <RimTalkLE_Letter_AllyDiplomacy_Fallback>{0} sends a friendly diplomatic note to your colony.</RimTalkLE_Letter_AllyDiplomacy_Fallback>
+  <RimTalkLE_Letter_AllyDiplomacy_GoodwillLine>Relations improved: +{0} goodwill.</RimTalkLE_Letter_AllyDiplomacy_GoodwillLine>
+  <RimTalkLE_Letter_Family_Label>Letter from family</RimTalkLE_Letter_Family_Label>
+  <RimTalkLE_Letter_Family_Fallback>A relative of {0} writes from afar with warm wishes.</RimTalkLE_Letter_Family_Fallback>
+  <RimTalkLE_Letter_Family_GiftNoteFallback>They enclosed a small gift with this letter.</RimTalkLE_Letter_Family_GiftNoteFallback>
+  <RimTalkLE_Letter_GiftLine>Gift included: {0} x{1}.</RimTalkLE_Letter_GiftLine>
+  <RimTalkLE_Letter_RelationFriend>friend</RimTalkLE_Letter_RelationFriend>
 </LanguageData>

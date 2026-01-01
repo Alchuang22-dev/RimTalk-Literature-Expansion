@@ -26,4 +26,12 @@
   <RimTalkLE_JournalPlaceholderTitle>{0}的日记</RimTalkLE_JournalPlaceholderTitle>
   <RimTalkLE_JournalPlaceholderText>{0}的日记条目，墨迹尚未干。</RimTalkLE_JournalPlaceholderText>
   <RimTalkLE_JournalAuthorLine>作者：{0}</RimTalkLE_JournalAuthorLine>
+  <RimTalkLE_Letter_AllyDiplomacy_Label>盟友外交来信</RimTalkLE_Letter_AllyDiplomacy_Label>
+  <RimTalkLE_Letter_AllyDiplomacy_Fallback>{0}向你们发来一封友好的外交信。</RimTalkLE_Letter_AllyDiplomacy_Fallback>
+  <RimTalkLE_Letter_AllyDiplomacy_GoodwillLine>关系提升：+{0}好感度。</RimTalkLE_Letter_AllyDiplomacy_GoodwillLine>
+  <RimTalkLE_Letter_Family_Label>家书</RimTalkLE_Letter_Family_Label>
+  <RimTalkLE_Letter_Family_Fallback>{0}的亲人从远方寄来了一封家书。</RimTalkLE_Letter_Family_Fallback>
+  <RimTalkLE_Letter_Family_GiftNoteFallback>他们在信中附上了一份小礼物。</RimTalkLE_Letter_Family_GiftNoteFallback>
+  <RimTalkLE_Letter_GiftLine>附件礼物：{0} x{1}。</RimTalkLE_Letter_GiftLine>
+  <RimTalkLE_Letter_RelationFriend>朋友</RimTalkLE_Letter_RelationFriend>
 </LanguageData>
