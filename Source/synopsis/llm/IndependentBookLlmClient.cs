@@ -448,8 +448,6 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local login failed: {ex.Message}");
                 return null;
             }
-
-            return null;
         }
 
         [DataContract]
