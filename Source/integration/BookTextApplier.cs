@@ -24,7 +24,10 @@
  * - Do not modify ThingDef or defs.
  */
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
+using RimWorld;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.synopsis.model;
 using Verse;
@@ -39,22 +42,23 @@ namespace RimTalk_LiteratureExpansion.integration
 
             var title = string.IsNullOrWhiteSpace(synopsis.Title) ? meta.Title : synopsis.Title;
             var text = synopsis.Synopsis ?? string.Empty;
+            var displayText = BuildDisplayText(meta, text);
 
             bool changed = false;
 
             if (meta.Book != null)
             {
-                ApplyToBook(meta.Book, title, text);
+                ApplyToBook(meta.Book, title, displayText);
                 changed = true;
             }
             else
             {
-                changed |= ApplyToThing(meta.Thing, title, text);
+                changed |= ApplyToThing(meta.Thing, title, displayText);
             }
 
             var thingWithComps = meta.Thing as ThingWithComps;
             if (thingWithComps != null)
-                changed |= ApplyToComps(thingWithComps, title, text);
+                changed |= ApplyToComps(thingWithComps, title, displayText, text);
 
             return changed;
         }
@@ -80,7 +84,7 @@ namespace RimTalk_LiteratureExpansion.integration
             return changed;
         }
 
-        private static bool ApplyToComps(ThingWithComps thing, string title, string synopsis)
+        private static bool ApplyToComps(ThingWithComps thing, string title, string displayText, string synopsis)
         {
             if (thing == null) return false;
 
@@ -97,14 +101,73 @@ namespace RimTalk_LiteratureExpansion.integration
                 changed |= TrySetString(comp, "Label", "label", title);
                 changed |= TrySetString(comp, "BookTitle", "bookTitle", title);
                 changed |= TrySetString(comp, "BookLabel", "bookLabel", title);
-                changed |= TrySetString(comp, "Description", "description", synopsis);
-                changed |= TrySetString(comp, "DescriptionDetailed", "descriptionDetailed", synopsis);
-                changed |= TrySetString(comp, "FlavorUI", "descriptionFlavor", synopsis);
-                changed |= TrySetString(comp, "BookDescription", "bookDescription", synopsis);
+                changed |= TrySetString(comp, "Description", "description", displayText);
+                changed |= TrySetString(comp, "DescriptionDetailed", "descriptionDetailed", displayText);
+                changed |= TrySetString(comp, "FlavorUI", "descriptionFlavor", displayText);
+                changed |= TrySetString(comp, "BookDescription", "bookDescription", displayText);
                 changed |= TrySetString(comp, "BookText", "bookText", synopsis);
             }
 
             return changed;
+        }
+
+        public static string BuildDisplayText(Book book, string synopsis)
+        {
+            if (book == null) return synopsis ?? string.Empty;
+            var effectsText = BuildEffectsText(book.BookComp, book.MentalBreakChancePerHour);
+            return AppendEffects(synopsis, effectsText);
+        }
+
+        private static string BuildDisplayText(BookMeta meta, string synopsis)
+        {
+            if (meta == null) return synopsis ?? string.Empty;
+            var effectsText = BuildEffectsText(meta.CompBook, meta.MentalBreakChancePerHour);
+            return AppendEffects(synopsis, effectsText);
+        }
+
+        private static string AppendEffects(string synopsis, string effectsText)
+        {
+            if (string.IsNullOrWhiteSpace(effectsText))
+                return synopsis ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(synopsis))
+                return effectsText;
+            return $"{synopsis.TrimEnd()}\n\n{effectsText}";
+        }
+
+        private static string BuildEffectsText(CompBook compBook, float mentalBreakChancePerHour)
+        {
+            var benefits = new List<string>();
+            if (compBook != null)
+            {
+                foreach (var doer in compBook.Doers)
+                {
+                    var benefit = doer.GetBenefitsString();
+                    if (!string.IsNullOrWhiteSpace(benefit))
+                        benefits.Add(benefit.Trim());
+                }
+            }
+
+            bool hasDangers = mentalBreakChancePerHour > 0f;
+            if (benefits.Count == 0 && !hasDangers)
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            if (benefits.Count > 0)
+            {
+                sb.AppendLine("Benefits".Translate());
+                for (int i = 0; i < benefits.Count; i++)
+                    sb.AppendLine(benefits[i]);
+            }
+
+            if (hasDangers)
+            {
+                if (sb.Length > 0)
+                    sb.AppendLine();
+                sb.AppendLine("Dangers".Translate());
+                sb.AppendLine($"- {"BookMentalBreak".Translate()}: {"PerHour".Translate(mentalBreakChancePerHour.ToStringPercent("0.0"))}");
+            }
+
+            return sb.ToString().TrimEnd();
         }
 
         private static bool ShouldApplyToComp(object comp)

@@ -20,6 +20,9 @@ namespace RimTalk_LiteratureExpansion
             BookSynopsisProcessor.Tick();
             ArtDescriptionProcessor.Tick();
             LetterEventScheduler.Tick();
+            QuestDescriptionRewriter.Tick();
+            IdeoDescriptionRewriter.Tick();
+            LetterTextRewriter.Tick();
         }
     }
 }

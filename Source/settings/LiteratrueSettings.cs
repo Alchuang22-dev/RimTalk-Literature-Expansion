@@ -17,6 +17,7 @@
  * - Do not store secrets here if you intend to share settings files publicly.
  *   (If you must store API key, keep it in LiteratureSettingsApi with clear UI warnings.)
  */
+using System.Collections.Generic;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.settings
@@ -28,6 +29,10 @@ namespace RimTalk_LiteratureExpansion.settings
         public LiteratureSettingsApi api = new LiteratureSettingsApi();
         public int synopsisTokenTarget = LiteratureSettingsDef.DefaultSynopsisTokenTarget;
         public bool allowArtEdits = false;
+        public List<string> questRewriteAllowList = new List<string>();
+        public bool allowIdeoDescriptionRewrite = false;
+        public bool allowLetterTextRewrite = false;
+        public List<string> letterRewriteAllowList = new List<string>();
 
         public override void ExposeData()
         {
@@ -37,11 +42,19 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Deep.Look(ref api, "api");
             Scribe_Values.Look(ref synopsisTokenTarget, "synopsisTokenTarget", LiteratureSettingsDef.DefaultSynopsisTokenTarget);
             Scribe_Values.Look(ref allowArtEdits, "allowArtEdits", false);
+            Scribe_Collections.Look(ref questRewriteAllowList, "questRewriteAllowList", LookMode.Value);
+            Scribe_Values.Look(ref allowIdeoDescriptionRewrite, "allowIdeoDescriptionRewrite", false);
+            Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
+            Scribe_Collections.Look(ref letterRewriteAllowList, "letterRewriteAllowList", LookMode.Value);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && api == null)
                 api = new LiteratureSettingsApi();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && synopsisTokenTarget <= 0)
                 synopsisTokenTarget = LiteratureSettingsDef.DefaultSynopsisTokenTarget;
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && questRewriteAllowList == null)
+                questRewriteAllowList = new List<string>();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && letterRewriteAllowList == null)
+                letterRewriteAllowList = new List<string>();
         }
     }
 }

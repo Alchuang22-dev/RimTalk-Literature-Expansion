@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using RimTalk_LiteratureExpansion.integration;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -62,7 +63,10 @@ namespace RimTalk_LiteratureExpansion.patches
             {
                 if (!string.IsNullOrWhiteSpace(record.Synopsis))
                 {
-                    __result = record.Synopsis;
+                    if (__instance is Book book)
+                        __result = BookTextApplier.BuildDisplayText(book, record.Synopsis);
+                    else
+                        __result = record.Synopsis;
                     return false;
                 }
             }

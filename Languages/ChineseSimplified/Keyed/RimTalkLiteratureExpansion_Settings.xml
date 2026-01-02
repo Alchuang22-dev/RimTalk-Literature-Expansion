@@ -34,4 +34,16 @@
   <RimTalkLE_Letter_Family_GiftNoteFallback>他们在信中附上了一份小礼物。</RimTalkLE_Letter_Family_GiftNoteFallback>
   <RimTalkLE_Letter_GiftLine>附件礼物：{0} x{1}。</RimTalkLE_Letter_GiftLine>
   <RimTalkLE_Letter_RelationFriend>朋友</RimTalkLE_Letter_RelationFriend>
+  <RimTalkLE_Settings_QuestFilter>任务描述筛选</RimTalkLE_Settings_QuestFilter>
+  <RimTalkLE_Settings_QuestFilterHelp>只有勾选的任务类型才会改写描述。</RimTalkLE_Settings_QuestFilterHelp>
+  <RimTalkLE_Settings_QuestFilterNone>未找到任何任务类型。</RimTalkLE_Settings_QuestFilterNone>
+  <RimTalkLE_Settings_SelectAll>全选</RimTalkLE_Settings_SelectAll>
+  <RimTalkLE_Settings_ClearAll>全不选</RimTalkLE_Settings_ClearAll>
+  <RimTalkLE_Settings_TextOverrides>文本改写（LLM）</RimTalkLE_Settings_TextOverrides>
+  <RimTalkLE_Settings_AllowIdeoDescriptionRewrite>改写文化描述</RimTalkLE_Settings_AllowIdeoDescriptionRewrite>
+  <RimTalkLE_Settings_AllowLetterTextRewrite>改写信件文本（非自定义）</RimTalkLE_Settings_AllowLetterTextRewrite>
+  <RimTalkLE_Settings_LetterFilter>信件筛选</RimTalkLE_Settings_LetterFilter>
+  <RimTalkLE_Settings_LetterFilterHelp>仅改写勾选的信件类型。</RimTalkLE_Settings_LetterFilterHelp>
+  <RimTalkLE_Settings_LetterFilterNone>未找到任何信件类型。</RimTalkLE_Settings_LetterFilterNone>
+  <RimTalkLE_Settings_QuestFilterExistingNote>仅改写新生成的任务。</RimTalkLE_Settings_QuestFilterExistingNote>
 </LanguageData>

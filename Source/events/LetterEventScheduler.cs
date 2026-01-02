@@ -152,7 +152,8 @@ namespace RimTalk_LiteratureExpansion.events
             Faction.OfPlayer.TryAffectGoodwillWith(faction, DiplomacyGoodwillDelta, canSendMessage: false, canSendHostilityLetter: false);
 
             var target = map != null ? new LookTargets(map.Center, map) : LookTargets.Invalid;
-            Find.LetterStack.ReceiveLetter(label, body, LetterDefOf.PositiveEvent, target, faction);
+            var letter = LetterMaker.MakeLetter(label, body, LetterDefOf.PositiveEvent, target, faction);
+            Find.LetterStack.ReceiveLetter(letter, LetterTextRewriter.CustomLetterDebugInfo);
             data.NextAllyDiplomacyTick = tick + GenDate.TicksPerYear;
         }
 
@@ -239,7 +240,8 @@ namespace RimTalk_LiteratureExpansion.events
                 ? new LookTargets(colonist)
                 : new LookTargets(map.Center, map);
 
-            Find.LetterStack.ReceiveLetter(label, body, LetterDefOf.PositiveEvent, target);
+            var letter = LetterMaker.MakeLetter(label, body, LetterDefOf.PositiveEvent, target);
+            Find.LetterStack.ReceiveLetter(letter, LetterTextRewriter.CustomLetterDebugInfo);
             data.NextFamilyLetterTick = tick + Rand.RangeInclusive(FamilyMinIntervalTicks, FamilyMaxIntervalTicks);
         }
 

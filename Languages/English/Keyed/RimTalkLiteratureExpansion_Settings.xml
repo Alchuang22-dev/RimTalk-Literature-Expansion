@@ -12,6 +12,18 @@
   <RimTalkLE_Settings_Debug>Debug</RimTalkLE_Settings_Debug>
   <RimTalkLE_Settings_TokenTarget>Book content target tokens</RimTalkLE_Settings_TokenTarget>
   <RimTalkLE_Settings_ClearBookCache>Clear cached book synopses</RimTalkLE_Settings_ClearBookCache>
+  <RimTalkLE_Settings_TextOverrides>LLM text overrides</RimTalkLE_Settings_TextOverrides>
+  <RimTalkLE_Settings_AllowIdeoDescriptionRewrite>Rewrite ideology descriptions</RimTalkLE_Settings_AllowIdeoDescriptionRewrite>
+  <RimTalkLE_Settings_AllowLetterTextRewrite>Rewrite letter text (non-custom)</RimTalkLE_Settings_AllowLetterTextRewrite>
+  <RimTalkLE_Settings_QuestFilter>Quest description filter</RimTalkLE_Settings_QuestFilter>
+  <RimTalkLE_Settings_QuestFilterHelp>Only selected quest types will have descriptions rewritten.</RimTalkLE_Settings_QuestFilterHelp>
+  <RimTalkLE_Settings_QuestFilterExistingNote>Only newly generated quests are rewritten.</RimTalkLE_Settings_QuestFilterExistingNote>
+  <RimTalkLE_Settings_QuestFilterNone>No quest types found.</RimTalkLE_Settings_QuestFilterNone>
+  <RimTalkLE_Settings_LetterFilter>Letter filter</RimTalkLE_Settings_LetterFilter>
+  <RimTalkLE_Settings_LetterFilterHelp>Only selected letter types will have text rewritten.</RimTalkLE_Settings_LetterFilterHelp>
+  <RimTalkLE_Settings_LetterFilterNone>No letter types found.</RimTalkLE_Settings_LetterFilterNone>
+  <RimTalkLE_Settings_SelectAll>Select all</RimTalkLE_Settings_SelectAll>
+  <RimTalkLE_Settings_ClearAll>Clear all</RimTalkLE_Settings_ClearAll>
   <RimTalkLE_Settings_Show>Show</RimTalkLE_Settings_Show>
   <RimTalkLE_Settings_Hide>Hide</RimTalkLE_Settings_Hide>
   <RimTalkLE_Settings_Empty>(empty)</RimTalkLE_Settings_Empty>
