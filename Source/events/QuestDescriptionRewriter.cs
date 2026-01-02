@@ -20,6 +20,8 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Globalization;
 using RimTalk.Data;
 using RimTalk.Service;
 using RimTalk_LiteratureExpansion.settings;
@@ -49,6 +51,7 @@ namespace RimTalk_LiteratureExpansion.events
         private const int TimeoutSeconds = 60;
         private const int TargetTokens = 140;
         private const string LogPrefix = "[RimTalk LE] [QuestRewrite]";
+        private static readonly Regex NumberTokenRegex = new Regex(@"\d+(?:\.\d+)?%?", RegexOptions.Compiled);
 
         private static readonly Dictionary<int, PendingQuestRewrite> Pending = new Dictionary<int, PendingQuestRewrite>();
         private static readonly Queue<Action> PendingActions = new Queue<Action>();
@@ -104,15 +107,23 @@ namespace RimTalk_LiteratureExpansion.events
                 return;
             }
 
-            var entityTokens = CollectEntityTokens(quest, original);
+            var requiredEntityTokens = new HashSet<string>();
+            var optionalEntityTokens = new HashSet<string>();
+            CollectEntityTokens(quest, original, requiredEntityTokens, optionalEntityTokens);
+            CollectQuestPartTokens(quest, original, requiredEntityTokens, optionalEntityTokens);
+            var numberTokens = ExtractNumberTokens(original);
+            var requiredTokens = MergeRequiredTokens(requiredEntityTokens.ToList(), numberTokens);
+            var optionalTokens = optionalEntityTokens.OrderByDescending(t => t.Length).ToList();
             var record = new PendingQuestRewrite(
                 quest,
                 initiator,
                 original,
-                entityTokens,
+                requiredTokens,
+                optionalTokens,
+                numberTokens,
                 GenTicks.SecondsToTicks(TimeoutSeconds));
             Pending[quest.id] = record;
-            Log.Message($"{LogPrefix} Queued quest (id={quest.id}, def={quest.root?.defName ?? "null"}, name={quest.name ?? "?"}, entities={record.EntityTokens.Count}).");
+            Log.Message($"{LogPrefix} Queued quest (id={quest.id}, def={quest.root?.defName ?? "null"}, name={quest.name ?? "?"}, required={record.RequiredTokens.Count}, optional={record.OptionalTokens.Count}, numbers={record.NumberTokens.Count}).");
         }
 
         public static void Tick()
@@ -186,20 +197,19 @@ namespace RimTalk_LiteratureExpansion.events
         {
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
             return
-$@"Write 3-5 sentences of in-universe flavor to append to a quest description, written in the quest issuer's voice.
+$@"Rewrite a quest description in the quest issuer's voice.
 Write in {Constant.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""
 
 Constraints:
-- Use the quest description as context to pick an appropriate format (plea letter, warning note, official notice), and keep a direct, sender-authored tone.
-- Keep it relevant to the situation; avoid unrelated filler.
-- Do NOT include any names, factions, places, rewards, requirements, or time limits.
-- Do NOT include any numbers or percentages.
-- Keep it generic and evocative; add atmosphere without new facts.
+- Expand the quest details into an in-universe letter, report, or notice from the issuer.
+- Add concrete story details while preserving all factual data from QuestData.
+- Do not change deadlines, rewards, counts, locations, or names.
+- Do not add new numbers or entities.
+- Minimum length: at least about 100 tokens.
 - Keep length <= {charLimit} characters (about {TargetTokens} tokens).
-- If unsure, return an empty string.
 - No markdown, no extra keys.";
         }
 
@@ -209,8 +219,8 @@ Constraints:
             sb.AppendLine("[QuestDescription]");
             if (!string.IsNullOrWhiteSpace(record.QuestName))
                 sb.AppendLine($"QuestName: {record.QuestName}");
-            sb.AppendLine("OriginalDescription:");
-            sb.AppendLine(record.OriginalDescription);
+            sb.AppendLine("[QuestData]");
+            sb.AppendLine(BuildQuestDataJson(record));
             return sb.ToString().TrimEnd();
         }
 
@@ -233,31 +243,24 @@ Constraints:
                 return;
             }
 
-            string flavor = (spec.Flavor ?? spec.Description)?.Trim();
-            if (string.IsNullOrWhiteSpace(flavor))
-            {
-                Log.Message($"{LogPrefix} Abort: empty rewritten text (id={questId}).");
-                return;
-            }
-            if (ContainsAnyDigits(flavor))
-            {
-                Log.Message($"{LogPrefix} Abort: flavor contains numbers (id={questId}).");
-                return;
-            }
-            if (ContainsAnyEntity(flavor, record.EntityTokens))
-            {
-                Log.Message($"{LogPrefix} Abort: flavor contains entity names (id={questId}).");
-                return;
-            }
-
             if (!IsQuestActive(record.Quest))
             {
                 Log.Message($"{LogPrefix} Abort: quest no longer active (id={questId}).");
                 return;
             }
 
+            string flavor = spec.Flavor?.Trim();
+            if (string.IsNullOrWhiteSpace(flavor))
+                flavor = spec.Description?.Trim();
+
+            if (string.IsNullOrWhiteSpace(flavor))
+            {
+                Log.Message($"{LogPrefix} Abort: empty LLM output (id={questId}).");
+                return;
+            }
+
             record.Quest.description = $"{record.OriginalDescription}\n\n{flavor}";
-            Log.Message($"{LogPrefix} Applied rewrite (id={questId}, def={record.Quest?.root?.defName ?? "null"}).");
+            Log.Message($"{LogPrefix} Applied flavor (id={questId}, def={record.Quest?.root?.defName ?? "null"}).");
         }
 
         private static bool IsQuestActive(Quest quest)
@@ -300,29 +303,63 @@ Constraints:
             return null;
         }
 
-        private static bool ContainsAnyDigits(string text)
+        private static bool ValidateRewrite(string rewritten, PendingQuestRewrite record, out string reason)
         {
-            if (string.IsNullOrWhiteSpace(text)) return false;
-            for (int i = 0; i < text.Length; i++)
+            reason = "unknown";
+            if (record == null)
             {
-                if (char.IsDigit(text[i]))
-                    return true;
+                reason = "missing record";
+                return false;
             }
-            return false;
+            if (string.IsNullOrWhiteSpace(rewritten))
+            {
+                reason = "empty description";
+                return false;
+            }
+            if (string.Equals(rewritten.Trim(), record.OriginalDescription.Trim(), StringComparison.Ordinal))
+            {
+                reason = "unchanged text";
+                return false;
+            }
+            int missingRequired = CountMissingTokens(rewritten, record.RequiredTokens);
+            if (missingRequired > 0)
+            {
+                reason = $"missing required tokens ({missingRequired}/{record.RequiredTokens.Count})";
+                return false;
+            }
+            if (!NumbersSubset(rewritten, record.NumberTokens))
+            {
+                reason = "unexpected numbers";
+                return false;
+            }
+            return true;
         }
 
-        private static bool ContainsAnyEntity(string text, List<string> entities)
+        private static bool ContainsAllTokens(string text, List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0) return true;
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                var token = tokens[i];
+                if (string.IsNullOrWhiteSpace(token)) continue;
+                if (!text.Contains(token))
+                    return false;
+            }
+            return true;
+        }
+
+        private static bool NumbersSubset(string text, List<string> allowedNumbers)
         {
             if (string.IsNullOrWhiteSpace(text)) return false;
-            if (entities == null || entities.Count == 0) return false;
-            for (int i = 0; i < entities.Count; i++)
+            var allowed = new HashSet<string>(allowedNumbers ?? new List<string>());
+            var matches = NumberTokenRegex.Matches(text);
+            for (int i = 0; i < matches.Count; i++)
             {
-                var token = entities[i];
-                if (string.IsNullOrWhiteSpace(token)) continue;
-                if (text.Contains(token))
-                    return true;
+                var value = matches[i].Value;
+                if (!allowed.Contains(value))
+                    return false;
             }
-            return false;
+            return true;
         }
 
         private static void ProcessPendingActions()
@@ -351,7 +388,9 @@ Constraints:
             public Pawn Initiator { get; }
             public string QuestName { get; }
             public string OriginalDescription { get; }
-            public List<string> EntityTokens { get; }
+            public List<string> RequiredTokens { get; }
+            public List<string> OptionalTokens { get; }
+            public List<string> NumberTokens { get; }
             public int QueuedTick { get; }
             public int DeadlineTick { get; }
             public bool Requested { get; set; }
@@ -360,7 +399,9 @@ Constraints:
                 Quest quest,
                 Pawn initiator,
                 string originalDescription,
-                List<string> entityTokens,
+                List<string> requiredTokens,
+                List<string> optionalTokens,
+                List<string> numberTokens,
                 int timeoutTicks)
             {
                 Quest = quest;
@@ -368,40 +409,275 @@ Constraints:
                 Initiator = initiator;
                 QuestName = quest?.name;
                 OriginalDescription = originalDescription ?? string.Empty;
-                EntityTokens = entityTokens ?? new List<string>();
+                RequiredTokens = requiredTokens ?? new List<string>();
+                OptionalTokens = optionalTokens ?? new List<string>();
+                NumberTokens = numberTokens ?? new List<string>();
                 QueuedTick = Find.TickManager.TicksGame;
                 DeadlineTick = QueuedTick + timeoutTicks;
             }
         }
 
-        private static List<string> CollectEntityTokens(Quest quest, string description)
+        private static List<string> ExtractNumberTokens(string description)
         {
             var tokens = new HashSet<string>();
-            if (quest == null || string.IsNullOrWhiteSpace(description)) return tokens.ToList();
+            if (string.IsNullOrWhiteSpace(description)) return tokens.ToList();
+            var matches = NumberTokenRegex.Matches(description);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var value = matches[i].Value;
+                if (!string.IsNullOrWhiteSpace(value))
+                    tokens.Add(value);
+            }
+            return tokens.ToList();
+        }
 
-            void AddToken(string value)
+        private static List<string> MergeRequiredTokens(List<string> entities, List<string> numbers)
+        {
+            var tokens = new HashSet<string>();
+            if (entities != null)
+            {
+                for (int i = 0; i < entities.Count; i++)
+                {
+                    var token = entities[i];
+                    if (!string.IsNullOrWhiteSpace(token))
+                        tokens.Add(token);
+                }
+            }
+            if (numbers != null)
+            {
+                for (int i = 0; i < numbers.Count; i++)
+                {
+                    var token = numbers[i];
+                    if (!string.IsNullOrWhiteSpace(token))
+                        tokens.Add(token);
+                }
+            }
+            return tokens.OrderByDescending(t => t.Length).ToList();
+        }
+
+        private static string FormatJsonArray(List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0) return "[]";
+            var sb = new StringBuilder();
+            sb.Append('[');
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append('"').Append(EscapeJson(tokens[i])).Append('"');
+            }
+            sb.Append(']');
+            return sb.ToString();
+        }
+
+        private static string EscapeJson(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            return value.Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
+        }
+
+        private static string BuildQuestDataJson(PendingQuestRewrite record)
+        {
+            var quest = record?.Quest;
+            var sb = new StringBuilder();
+            sb.AppendLine("{");
+            sb.AppendLine($"  \"id\": {quest?.id ?? -1},");
+            sb.AppendLine($"  \"def\": \"{EscapeJson(quest?.root?.defName ?? string.Empty)}\",");
+            sb.AppendLine($"  \"name\": \"{EscapeJson(quest?.name ?? string.Empty)}\",");
+            sb.AppendLine($"  \"requiredTokens\": {FormatJsonArray(record?.RequiredTokens)},");
+            sb.AppendLine($"  \"optionalTokens\": {FormatJsonArray(record?.OptionalTokens)},");
+            sb.AppendLine($"  \"numbers\": {FormatJsonArray(record?.NumberTokens)},");
+            sb.AppendLine($"  \"involvedFactions\": {FormatJsonArray(GetFactionTokens(quest))},");
+            sb.AppendLine($"  \"lookTargets\": {FormatJsonArray(GetLookTargetTokens(quest))},");
+            sb.AppendLine($"  \"parts\": {FormatQuestParts(quest)},");
+            sb.AppendLine($"  \"originalDescription\": \"{EscapeJson(record?.OriginalDescription ?? string.Empty)}\"");
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        private static List<string> GetFactionTokens(Quest quest)
+        {
+            var tokens = new HashSet<string>();
+            if (quest == null) return tokens.ToList();
+            foreach (var faction in quest.InvolvedFactions)
+            {
+                if (faction == null) continue;
+                if (!string.IsNullOrWhiteSpace(faction.Name)) tokens.Add(faction.Name);
+                if (!string.IsNullOrWhiteSpace(faction.def?.label)) tokens.Add(faction.def.label);
+            }
+            return tokens.OrderByDescending(t => t.Length).ToList();
+        }
+
+        private static List<string> GetLookTargetTokens(Quest quest)
+        {
+            var tokens = new HashSet<string>();
+            if (quest == null) return tokens.ToList();
+            foreach (var target in quest.QuestLookTargets)
+            {
+                if (target.Thing == null) continue;
+                var pawn = target.Thing as Pawn;
+                if (pawn != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(pawn.LabelShortCap)) tokens.Add(pawn.LabelShortCap);
+                    if (!string.IsNullOrWhiteSpace(pawn.Name?.ToStringShort)) tokens.Add(pawn.Name.ToStringShort);
+                }
+                else
+                {
+                    var label = target.Thing.LabelCap;
+                    if (!string.IsNullOrWhiteSpace(label)) tokens.Add(label);
+                }
+            }
+            return tokens.OrderByDescending(t => t.Length).ToList();
+        }
+
+        private static string FormatQuestParts(Quest quest)
+        {
+            if (quest == null) return "[]";
+            var parts = quest.PartsListForReading;
+            if (parts == null || parts.Count == 0) return "[]";
+
+            var sb = new StringBuilder();
+            sb.Append('[');
+            bool first = true;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                var part = parts[i];
+                if (part == null) continue;
+                var partJson = FormatQuestPart(part);
+                if (string.IsNullOrWhiteSpace(partJson)) continue;
+                if (!first) sb.Append(", ");
+                sb.Append(partJson);
+                first = false;
+            }
+            sb.Append(']');
+            return sb.ToString();
+        }
+
+        private static string FormatQuestPart(QuestPart part)
+        {
+            var type = part.GetType();
+            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var sb = new StringBuilder();
+            sb.Append("{\"type\":\"").Append(EscapeJson(type.Name)).Append("\",\"fields\":{");
+
+            bool first = true;
+            for (int i = 0; i < fields.Length; i++)
+            {
+                var field = fields[i];
+                if (field == null) continue;
+                var value = field.GetValue(part);
+                if (!TryFormatJsonValue(value, out var formatted))
+                    continue;
+                if (!first) sb.Append(',');
+                sb.Append('\"').Append(EscapeJson(field.Name)).Append("\":").Append(formatted);
+                first = false;
+            }
+
+            sb.Append("}}");
+            return sb.ToString();
+        }
+
+        private static bool TryFormatJsonValue(object value, out string formatted)
+        {
+            formatted = null;
+            if (value == null) return false;
+
+            switch (value)
+            {
+                case string s:
+                    formatted = $"\"{EscapeJson(s)}\"";
+                    return true;
+                case bool b:
+                    formatted = b ? "true" : "false";
+                    return true;
+                case int i:
+                    formatted = i.ToString(CultureInfo.InvariantCulture);
+                    return true;
+                case long l:
+                    formatted = l.ToString(CultureInfo.InvariantCulture);
+                    return true;
+                case float f:
+                    formatted = f.ToString(CultureInfo.InvariantCulture);
+                    return true;
+                case double d:
+                    formatted = d.ToString(CultureInfo.InvariantCulture);
+                    return true;
+                case Enum e:
+                    formatted = $"\"{EscapeJson(e.ToString())}\"";
+                    return true;
+            }
+
+            if (value is Def def)
+            {
+                formatted = $"\"{EscapeJson(def.defName ?? def.label ?? string.Empty)}\"";
+                return true;
+            }
+
+            if (value is Pawn pawn)
+            {
+                formatted = $"\"{EscapeJson(pawn.Name?.ToStringShort ?? pawn.LabelShortCap ?? string.Empty)}\"";
+                return true;
+            }
+
+            if (value is Faction faction)
+            {
+                formatted = $"\"{EscapeJson(faction.Name ?? faction.def?.label ?? string.Empty)}\"";
+                return true;
+            }
+
+            if (value is System.Collections.IEnumerable enumerable)
+            {
+                var items = new List<string>();
+                foreach (var item in enumerable)
+                {
+                    if (item == null) continue;
+                    if (TryFormatJsonValue(item, out var formattedItem))
+                        items.Add(formattedItem);
+                }
+                if (items.Count == 0) return false;
+                formatted = $"[{string.Join(", ", items)}]";
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void CollectEntityTokens(
+            Quest quest,
+            string description,
+            HashSet<string> required,
+            HashSet<string> optional)
+        {
+            if (quest == null || string.IsNullOrWhiteSpace(description)) return;
+
+            void AddToken(string value, bool isRequired)
             {
                 if (string.IsNullOrWhiteSpace(value)) return;
                 if (!description.Contains(value)) return;
-                tokens.Add(value);
+                if (isRequired)
+                    required.Add(value);
+                else
+                    optional.Add(value);
             }
 
-            AddToken(quest.name);
+            AddToken(quest.name, false);
 
             foreach (var faction in quest.InvolvedFactions)
             {
                 if (faction == null) continue;
-                AddToken(faction.Name);
+                AddToken(faction.Name, true);
                 if (faction.def != null)
-                    AddToken(faction.def.label);
+                    AddToken(faction.def.label, false);
             }
 
             foreach (var target in quest.QuestLookTargets)
             {
                 var pawn = target.Thing as Pawn;
                 if (pawn == null) continue;
-                AddToken(pawn.LabelShortCap);
-                AddToken(pawn.Name?.ToStringShort);
+                AddToken(pawn.LabelShortCap, true);
+                AddToken(pawn.Name?.ToStringShort, true);
             }
 
             var parts = quest.PartsListForReading;
@@ -411,14 +687,12 @@ Constraints:
                 {
                     var part = parts[i];
                     if (part == null) continue;
-                    TryAddPawnTokensFromPart(part, AddToken);
+                    TryAddPawnTokensFromPart(part, optional, description);
                 }
             }
-
-            return tokens.OrderByDescending(t => t.Length).ToList();
         }
 
-        private static void TryAddPawnTokensFromPart(QuestPart part, Action<string> addToken)
+        private static void TryAddPawnTokensFromPart(QuestPart part, HashSet<string> optional, string description)
         {
             var type = part.GetType();
             var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
@@ -428,8 +702,8 @@ Constraints:
             var pawnObj = pawnField != null ? pawnField.GetValue(part) : pawnProp?.GetValue(part, null);
             if (pawnObj is Pawn pawn)
             {
-                addToken(pawn.LabelShortCap);
-                addToken(pawn.Name?.ToStringShort);
+                AddOptional(optional, description, pawn.LabelShortCap);
+                AddOptional(optional, description, pawn.Name?.ToStringShort);
             }
 
             var pawnsField = type.GetField("pawns", flags);
@@ -441,11 +715,106 @@ Constraints:
                 {
                     if (obj is Pawn listedPawn)
                     {
-                        addToken(listedPawn.LabelShortCap);
-                        addToken(listedPawn.Name?.ToStringShort);
+                        AddOptional(optional, description, listedPawn.LabelShortCap);
+                        AddOptional(optional, description, listedPawn.Name?.ToStringShort);
                     }
                 }
             }
+        }
+
+        private static void AddOptional(HashSet<string> optional, string description, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            if (string.IsNullOrWhiteSpace(description)) return;
+            if (!description.Contains(value)) return;
+            optional.Add(value);
+        }
+
+        private static void CollectQuestPartTokens(
+            Quest quest,
+            string description,
+            HashSet<string> required,
+            HashSet<string> optional)
+        {
+            if (quest == null || string.IsNullOrWhiteSpace(description)) return;
+            var parts = quest.PartsListForReading;
+            if (parts == null || parts.Count == 0) return;
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                var part = parts[i];
+                if (part == null) continue;
+                var type = part.GetType();
+                var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                for (int f = 0; f < fields.Length; f++)
+                {
+                    var field = fields[f];
+                    if (field == null) continue;
+                    var value = field.GetValue(part);
+                    CollectTokensFromValue(value, description, required, optional);
+                }
+            }
+        }
+
+        private static void CollectTokensFromValue(
+            object value,
+            string description,
+            HashSet<string> required,
+            HashSet<string> optional)
+        {
+            if (value == null) return;
+            switch (value)
+            {
+                case string s:
+                    AddTokenFromDescription(s, description, required, optional);
+                    return;
+                case Def def:
+                    AddTokenFromDescription(def.label, description, required, optional);
+                    AddTokenFromDescription(def.defName, description, required, optional);
+                    return;
+                case Pawn pawn:
+                    AddTokenFromDescription(pawn.LabelShortCap, description, required, optional);
+                    AddTokenFromDescription(pawn.Name?.ToStringShort, description, required, optional);
+                    return;
+                case Faction faction:
+                    AddTokenFromDescription(faction.Name, description, required, optional);
+                    AddTokenFromDescription(faction.def?.label, description, required, optional);
+                    return;
+            }
+
+            if (value is System.Collections.IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                    CollectTokensFromValue(item, description, required, optional);
+            }
+        }
+
+        private static void AddTokenFromDescription(
+            string value,
+            string description,
+            HashSet<string> required,
+            HashSet<string> optional)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            if (string.IsNullOrWhiteSpace(description)) return;
+            if (description.Contains(value))
+                required.Add(value);
+            else
+                optional.Add(value);
+        }
+
+        private static int CountMissingTokens(string text, List<string> tokens)
+        {
+            if (tokens == null || tokens.Count == 0) return 0;
+            int missing = 0;
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                var token = tokens[i];
+                if (string.IsNullOrWhiteSpace(token)) continue;
+                if (!text.Contains(token))
+                    missing++;
+            }
+            return missing;
         }
     }
 }
