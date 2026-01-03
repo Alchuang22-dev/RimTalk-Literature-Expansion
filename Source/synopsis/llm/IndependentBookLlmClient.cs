@@ -21,9 +21,10 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         private const int MinOutputTokens = 512;
         private const int MaxOutputTokensCap = 2048;
         private const int OutputTokenOverhead = 120;
+        private const string Player2GameClientId = "019a8368-b00b-72bc-b367-2825079dc6fb";
         private const string Player2LocalBaseUrl = "http://localhost:4315/v1";
         private const string Player2LocalHealthUrl = "http://localhost:4315/v1/health";
-        private const string Player2LocalLoginUrl = "http://localhost:4315/v1/login/web/019a8368-b00b-72bc-b367-2825079dc6fb";
+        private const string Player2LocalLoginUrl = "http://localhost:4315/v1/login/web/" + Player2GameClientId;
         private const int Player2LocalHealthTimeoutMs = 2000;
         private const int Player2LocalLoginTimeoutMs = 3000;
         private static string _player2LocalKey;
@@ -105,7 +106,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 string json = BuildRequestJson(config.Provider, model, request.Context, request.Prompt, maxTokens);
                 Log.Message($"[RimTalk LE] [Req {requestId}] Request payload length: {json?.Length ?? 0}");
 
-                string responseText = await PostJsonAsync(requestId, endpoint, json, apiKey, config.Provider == AIProvider.Google);
+                string responseText = await PostJsonAsync(requestId, endpoint, json, apiKey, config.Provider);
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
                     Log.Warning($"[RimTalk LE] [Req {requestId}] Empty response from independent book request.");
@@ -182,24 +183,48 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             {
                 case AIProvider.Google:
                     return $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={config.ApiKey}";
-                case AIProvider.OpenAI:
-                    return "https://api.openai.com/v1/chat/completions";
-                case AIProvider.DeepSeek:
-                    return "https://api.deepseek.com/v1/chat/completions";
-                case AIProvider.Grok:
-                    return "https://api.x.ai/v1/chat/completions";
-                case AIProvider.GLM:
-                    return "https://api.z.ai/api/paas/v4/chat/completions";
-                case AIProvider.OpenRouter:
-                    return "https://openrouter.ai/api/v1/chat/completions";
                 case AIProvider.Player2:
-                    return "https://api.player2.game/v1/chat/completions";
+                    return NormalizePlayer2Endpoint(GetProviderEndpointUrl(config.Provider));
                 case AIProvider.Local:
                 case AIProvider.Custom:
                     return NormalizeEndpoint(config.BaseUrl);
                 default:
+                    return GetProviderEndpointUrl(config.Provider);
+            }
+        }
+
+        private static string GetProviderEndpointUrl(AIProvider provider)
+        {
+            switch (provider.ToString())
+            {
+                case "OpenAI":
+                    return "https://api.openai.com/v1/chat/completions";
+                case "DeepSeek":
+                    return "https://api.deepseek.com/v1/chat/completions";
+                case "Grok":
+                    return "https://api.x.ai/v1/chat/completions";
+                case "GLM":
+                    return "https://api.z.ai/api/paas/v4/chat/completions";
+                case "OpenRouter":
+                    return "https://openrouter.ai/api/v1/chat/completions";
+                case "AlibabaIntl":
+                    return "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions";
+                case "AlibabaCN":
+                    return "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+                case "Player2":
+                    return "https://api.player2.game/v1";
+                default:
                     return string.Empty;
             }
+        }
+
+        private static string NormalizePlayer2Endpoint(string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl)) return string.Empty;
+            var trimmed = baseUrl.Trim().TrimEnd('/');
+            if (trimmed.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+                return trimmed;
+            return trimmed + "/chat/completions";
         }
 
         private static string NormalizeEndpoint(string baseUrl)
@@ -260,15 +285,17 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             return JsonUtil.SerializeToJson(openAiRequest);
         }
 
-        private static async Task<string> PostJsonAsync(int requestId, string url, string json, string apiKey, bool isGoogle)
+        private static async Task<string> PostJsonAsync(int requestId, string url, string json, string apiKey, AIProvider provider)
         {
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
             request.ContentType = "application/json";
             request.Timeout = TimeoutMs;
 
-            if (!isGoogle && !string.IsNullOrWhiteSpace(apiKey))
+            if (provider != AIProvider.Google && !string.IsNullOrWhiteSpace(apiKey))
                 request.Headers["Authorization"] = $"Bearer {apiKey}";
+            if (provider == AIProvider.Player2)
+                request.Headers["X-Game-Client-Id"] = Player2GameClientId;
 
             byte[] bodyRaw = Encoding.UTF8.GetBytes(json ?? string.Empty);
             request.ContentLength = bodyRaw.Length;

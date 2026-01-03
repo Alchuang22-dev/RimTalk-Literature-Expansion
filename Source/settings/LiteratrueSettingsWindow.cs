@@ -123,20 +123,8 @@ namespace RimTalk_LiteratureExpansion.settings
             }
 
             listing.Gap(12f);
-            listing.Label("RimTalkLE_Settings_QuestFilter".Translate());
-            listing.Gap(4f);
-            DrawQuestFilterNotes(listing);
-            listing.Gap(6f);
-            Rect filterRect = listing.GetRect(240f);
-            DrawQuestFilter(filterRect, settings);
-
-            listing.Gap(12f);
-            listing.Label("RimTalkLE_Settings_LetterFilter".Translate());
-            listing.Gap(4f);
-            listing.Label("RimTalkLE_Settings_LetterFilterHelp".Translate());
-            listing.Gap(6f);
-            Rect letterFilterRect = listing.GetRect(240f);
-            DrawLetterFilter(letterFilterRect, settings);
+            Rect filterPanel = listing.GetRect(300f);
+            DrawFilterColumns(filterPanel, settings);
 
             listing.End();
             if (Event.current.type == EventType.Layout)
@@ -217,30 +205,58 @@ namespace RimTalk_LiteratureExpansion.settings
                 settings.questRewriteAllowList = allowSet.OrderBy(x => x).ToList();
         }
 
-        private static void DrawQuestFilterNotes(Listing_Standard listing)
+        private static void DrawFilterColumns(Rect rect, LiteratureSettings settings)
         {
-            if (listing == null) return;
-            string leftText = "RimTalkLE_Settings_QuestFilterHelp".Translate();
-            string rightText = "RimTalkLE_Settings_QuestFilterExistingNote".Translate();
+            if (settings == null) return;
+            float gap = LiteratureSettingsDef.FieldGap;
+            float halfWidth = (rect.width - gap) / 2f;
+            Rect leftRect = new Rect(rect.x, rect.y, halfWidth, rect.height);
+            Rect rightRect = new Rect(leftRect.xMax + gap, rect.y, halfWidth, rect.height);
 
-            Rect rect = listing.GetRect(Text.LineHeight);
-            Rect leftRect = rect.LeftPart(0.7f);
-            Rect rightRect = rect.RightPart(0.3f);
+            DrawLetterFilterColumn(leftRect, settings);
+            DrawQuestFilterColumn(rightRect, settings);
+        }
 
-            Widgets.Label(leftRect, leftText);
+        private static void DrawLetterFilterColumn(Rect rect, LiteratureSettings settings)
+        {
+            float lineHeight = Text.LineHeight;
+            Rect titleRect = new Rect(rect.x, rect.y, rect.width, lineHeight);
+            Rect helpRect = new Rect(rect.x, rect.y + lineHeight, rect.width, lineHeight);
+            Widgets.Label(titleRect, "RimTalkLE_Settings_LetterFilter".Translate());
+            Widgets.Label(helpRect, "RimTalkLE_Settings_LetterFilterHelp".Translate());
 
-            var anchor = Text.Anchor;
-            Text.Anchor = TextAnchor.MiddleRight;
-            Widgets.Label(rightRect, rightText);
-            Text.Anchor = anchor;
+            float listTop = rect.y + lineHeight * 2f + 6f;
+            Rect listRect = new Rect(rect.x, listTop, rect.width, rect.yMax - listTop);
+            DrawLetterFilter(listRect, settings);
+        }
 
-            listing.Gap(listing.verticalSpacing);
+        private static void DrawQuestFilterColumn(Rect rect, LiteratureSettings settings)
+        {
+            float lineHeight = Text.LineHeight;
+            Rect titleRect = new Rect(rect.x, rect.y, rect.width, lineHeight);
+            Rect notesRect = new Rect(rect.x, rect.y + lineHeight, rect.width, lineHeight * 2f);
+            Widgets.Label(titleRect, "RimTalkLE_Settings_QuestFilter".Translate());
+            DrawQuestFilterNotesRect(notesRect);
+
+            float listTop = rect.y + lineHeight * 3f + 6f;
+            Rect listRect = new Rect(rect.x, listTop, rect.width, rect.yMax - listTop);
+            DrawQuestFilter(listRect, settings);
+        }
+
+        private static void DrawQuestFilterNotesRect(Rect rect)
+        {
+            string firstLine = "RimTalkLE_Settings_QuestFilterHelp".Translate();
+            string secondLine = "RimTalkLE_Settings_QuestFilterExistingNote".Translate();
+            Rect line1 = new Rect(rect.x, rect.y, rect.width, Text.LineHeight);
+            Rect line2 = new Rect(rect.x, rect.y + Text.LineHeight, rect.width, Text.LineHeight);
+            Widgets.Label(line1, firstLine);
+            Widgets.Label(line2, secondLine);
         }
 
         private static void DrawLetterFilter(Rect rect, LiteratureSettings settings)
         {
             if (settings == null) return;
-            var defs = DefDatabase<LetterDef>.AllDefsListForReading;
+            var defs = GetLetterDefs();
             if (defs == null || defs.Count == 0)
             {
                 Widgets.Label(rect, "RimTalkLE_Settings_LetterFilterNone".Translate());
@@ -276,8 +292,12 @@ namespace RimTalk_LiteratureExpansion.settings
 
             float gap = 4f;
             Rect scrollOut = new Rect(rect.x, rect.y + rowHeight + gap, rect.width, rect.height - rowHeight - gap);
-            float viewHeight = defs.Count * (rowHeight + 2f);
+            float viewHeight = Mathf.Max(defs.Count * (rowHeight + 2f), scrollOut.height);
             Rect viewRect = new Rect(0f, 0f, scrollOut.width - 16f, viewHeight);
+
+            float maxScroll = Mathf.Max(0f, viewHeight - scrollOut.height);
+            if (_letterFilterScroll.y > maxScroll)
+                _letterFilterScroll.y = maxScroll;
 
             Widgets.BeginScrollView(scrollOut, ref _letterFilterScroll, viewRect);
             var listing = new Listing_Standard();
@@ -308,6 +328,61 @@ namespace RimTalk_LiteratureExpansion.settings
 
             if (changed)
                 settings.letterRewriteAllowList = allowSet.OrderBy(x => x).ToList();
+        }
+
+        private static List<LetterDef> GetLetterDefs()
+        {
+            var defs = new List<LetterDef>();
+            var seen = new HashSet<string>();
+
+            void AddDef(LetterDef def)
+            {
+                if (def == null || string.IsNullOrWhiteSpace(def.defName)) return;
+                if (seen.Add(def.defName))
+                    defs.Add(def);
+            }
+
+            void AddDefByName(string defName)
+            {
+                if (string.IsNullOrWhiteSpace(defName)) return;
+                var def = DefDatabase<LetterDef>.GetNamedSilentFail(defName);
+                if (def == null)
+                    def = new LetterDef { defName = defName, label = defName };
+                AddDef(def);
+            }
+
+            var database = DefDatabase<LetterDef>.AllDefsListForReading;
+            if (database != null)
+            {
+                for (int i = 0; i < database.Count; i++)
+                    AddDef(database[i]);
+            }
+
+            AddDefByName("PositiveEvent");
+            AddDefByName("NewQuest");
+            AddDef(LetterDefOf.ThreatBig);
+            AddDef(LetterDefOf.ThreatSmall);
+            AddDef(LetterDefOf.NegativeEvent);
+            AddDef(LetterDefOf.NeutralEvent);
+            AddDef(LetterDefOf.PositiveEvent);
+            AddDef(LetterDefOf.Death);
+            AddDef(LetterDefOf.AcceptVisitors);
+            AddDef(LetterDefOf.AcceptJoiner);
+            AddDef(LetterDefOf.GameEnded);
+            AddDef(LetterDefOf.ChoosePawn);
+            AddDef(LetterDefOf.RitualOutcomeNegative);
+            AddDef(LetterDefOf.RitualOutcomePositive);
+            AddDef(LetterDefOf.RelicHuntInstallationFound);
+            AddDef(LetterDefOf.BabyBirth);
+            AddDef(LetterDefOf.BabyToChild);
+            AddDef(LetterDefOf.ChildToAdult);
+            AddDef(LetterDefOf.ChildBirthday);
+            AddDef(LetterDefOf.Bossgroup);
+            AddDef(LetterDefOf.AcceptCreepJoiner);
+            AddDef(LetterDefOf.EntityDiscovered);
+            AddDef(LetterDefOf.BundleLetter);
+
+            return defs;
         }
 
     }
