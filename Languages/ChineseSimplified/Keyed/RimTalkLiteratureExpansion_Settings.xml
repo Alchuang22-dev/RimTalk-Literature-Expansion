@@ -46,4 +46,17 @@
   <RimTalkLE_Settings_LetterFilterHelp>仅改写勾选的信件类型。</RimTalkLE_Settings_LetterFilterHelp>
   <RimTalkLE_Settings_LetterFilterNone>未找到任何信件类型。</RimTalkLE_Settings_LetterFilterNone>
   <RimTalkLE_Settings_QuestFilterExistingNote>仅改写新生成的任务。</RimTalkLE_Settings_QuestFilterExistingNote>
+  <RimTalkLE_Quest_Advert_TitleFallback>来自{0}的商品广告</RimTalkLE_Quest_Advert_TitleFallback>
+  <RimTalkLE_Quest_Advert_DescIntro>{0}在{1}的商人发来了一份推销内容。</RimTalkLE_Quest_Advert_DescIntro>
+  <RimTalkLE_Quest_Advert_DescInstructions>请选择其中一项，并送出白银完成交易。</RimTalkLE_Quest_Advert_DescInstructions>
+  <RimTalkLE_Quest_Advert_DescOptionLine>{0}：支付{1}白银可获得{2}。</RimTalkLE_Quest_Advert_DescOptionLine>
+  <RimTalkLE_Quest_Advert_DescTiming>你有{0}天可接受任务，接受后需在{1}天内送达白银。</RimTalkLE_Quest_Advert_DescTiming>
+  <RimTalkLE_Quest_Advert_Expiry>广告已过期。</RimTalkLE_Quest_Advert_Expiry>
+  <RimTalkLE_Quest_Warning_TitleFallback>{0}的警告信</RimTalkLE_Quest_Warning_TitleFallback>
+  <RimTalkLE_Quest_Warning_DescIntro>{0}在{1}发来警告。</RimTalkLE_Quest_Warning_DescIntro>
+  <RimTalkLE_Quest_Warning_DescDemand>要求支付：{0}白银。</RimTalkLE_Quest_Warning_DescDemand>
+  <RimTalkLE_Quest_Warning_DescMethod>请通过运输舱送达白银。</RimTalkLE_Quest_Warning_DescMethod>
+  <RimTalkLE_Quest_Warning_DescThreat>若未支付，将遭到报复。</RimTalkLE_Quest_Warning_DescThreat>
+  <RimTalkLE_Quest_Warning_DescTiming>你有{0}天可接受任务，接受后需在{1}天内送达白银。</RimTalkLE_Quest_Warning_DescTiming>
+  <RimTalkLE_Quest_Warning_Expiry>警告已过期。</RimTalkLE_Quest_Warning_Expiry>
 </LanguageData>

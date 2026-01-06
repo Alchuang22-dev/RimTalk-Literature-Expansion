@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <QuestScriptDef>
+    <defName>RimTalkLE_AdvertQuest</defName>
+    <randomlySelectable>false</randomlySelectable>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <questAvailableLetterDef>NewQuest</questAvailableLetterDef>
+    <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <root Class="QuestNode_Sequence" />
+  </QuestScriptDef>
+  <QuestScriptDef>
+    <defName>RimTalkLE_WarningQuest</defName>
+    <randomlySelectable>false</randomlySelectable>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <questAvailableLetterDef>NewQuest</questAvailableLetterDef>
+    <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <root Class="QuestNode_Sequence" />
+  </QuestScriptDef>
+</Defs>

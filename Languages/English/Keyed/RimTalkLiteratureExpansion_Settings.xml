@@ -46,4 +46,17 @@
   <RimTalkLE_Letter_Family_GiftNoteFallback>They enclosed a small gift with this letter.</RimTalkLE_Letter_Family_GiftNoteFallback>
   <RimTalkLE_Letter_GiftLine>Gift included: {0} x{1}.</RimTalkLE_Letter_GiftLine>
   <RimTalkLE_Letter_RelationFriend>friend</RimTalkLE_Letter_RelationFriend>
+  <RimTalkLE_Quest_Advert_TitleFallback>Trade offer from {0}</RimTalkLE_Quest_Advert_TitleFallback>
+  <RimTalkLE_Quest_Advert_DescIntro>A trader from {0} at {1} has sent a sales pitch.</RimTalkLE_Quest_Advert_DescIntro>
+  <RimTalkLE_Quest_Advert_DescInstructions>Choose one offer and send the silver to finalize the deal.</RimTalkLE_Quest_Advert_DescInstructions>
+  <RimTalkLE_Quest_Advert_DescOptionLine>{0}: pay {1} silver for {2}.</RimTalkLE_Quest_Advert_DescOptionLine>
+  <RimTalkLE_Quest_Advert_DescTiming>You have {0} days to accept, then {1} days to deliver payment.</RimTalkLE_Quest_Advert_DescTiming>
+  <RimTalkLE_Quest_Advert_Expiry>Offer expired.</RimTalkLE_Quest_Advert_Expiry>
+  <RimTalkLE_Quest_Warning_TitleFallback>Warning from {0}</RimTalkLE_Quest_Warning_TitleFallback>
+  <RimTalkLE_Quest_Warning_DescIntro>{0} at {1} sends a warning.</RimTalkLE_Quest_Warning_DescIntro>
+  <RimTalkLE_Quest_Warning_DescDemand>Demand: pay {0} silver.</RimTalkLE_Quest_Warning_DescDemand>
+  <RimTalkLE_Quest_Warning_DescMethod>Send payment by transport pod.</RimTalkLE_Quest_Warning_DescMethod>
+  <RimTalkLE_Quest_Warning_DescThreat>Failure to pay will invite retaliation.</RimTalkLE_Quest_Warning_DescThreat>
+  <RimTalkLE_Quest_Warning_DescTiming>You have {0} days to accept, then {1} days to deliver payment.</RimTalkLE_Quest_Warning_DescTiming>
+  <RimTalkLE_Quest_Warning_Expiry>Demand expired.</RimTalkLE_Quest_Warning_Expiry>
 </LanguageData>
