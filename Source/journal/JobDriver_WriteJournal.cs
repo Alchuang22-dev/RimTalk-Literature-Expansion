@@ -69,6 +69,7 @@ namespace RimTalk_LiteratureExpansion.journal
                 }
 
                 job.targetB = log;
+                job.count = 1;
                 Log.Message($"[RimTalk LE] [Journal] Found log {log.LabelCap} at {log.Position}.");
             };
             toil.defaultCompleteMode = ToilCompleteMode.Instant;

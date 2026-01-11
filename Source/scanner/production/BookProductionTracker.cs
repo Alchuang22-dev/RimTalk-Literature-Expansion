@@ -9,18 +9,21 @@
  * - Patch_BillProduction_Finish
  *
  * Responsibilities:
- * - Detect when a book has just been produced.
- * - Mark it as needing synopsis generation.
+ * - Track produced book Things directly from recipe output.
  *
  * Do NOT:
  * - Do not generate content here.
  * - Do not access LLM services.
+ * - Do not scan based on position; use direct product tracking.
  */
+using System.Collections.Generic;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.scanner.queue;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
+using RimTalk_LiteratureExpansion.synopsis;
+using RimWorld;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.scanner.production
@@ -29,48 +32,52 @@ namespace RimTalk_LiteratureExpansion.scanner.production
     {
         public static void NotifyProduced(Pawn worker)
         {
-            if (worker == null || worker.Map == null) return;
+            if (worker == null) return;
+            var settings = LiteratureMod.Settings;
+            if (settings != null && !settings.enabled) return;
+        }
+
+        public static void NotifyProducts(IEnumerable<Thing> products, Pawn worker, RecipeDef recipeDef)
+        {
+            if (products == null) return;
             var settings = LiteratureMod.Settings;
             if (settings != null && !settings.enabled) return;
 
-            var cache = LiteratueSaveData.Current?.SynopsisCache;
-            var map = worker.Map;
-            var center = worker.Position;
-
             int matched = 0;
             int enqueued = 0;
+            int cached = 0;
 
-            foreach (var cell in GenRadial.RadialCellsAround(center, 3f, true))
+            var cache = LiteratueSaveData.Current?.SynopsisCache;
+            var mapOverride = worker?.Map;
+
+            foreach (var product in products)
             {
-                if (!cell.InBounds(map)) continue;
+                if (product == null || product.DestroyedOrNull()) continue;
 
-                var things = cell.GetThingList(map);
-                if (things == null || things.Count == 0) continue;
+                var meta = BookClassifier.Classify(product);
+                if (meta == null) continue;
+                matched++;
 
-                for (int i = 0; i < things.Count; i++)
+                if (BookKeyProvider.TryGetKey(meta.Thing, mapOverride, out var key) &&
+                    cache != null &&
+                    cache.Contains(key))
                 {
-                    var thing = things[i];
-                    if (thing == null || thing.DestroyedOrNull()) continue;
-
-                    var meta = BookClassifier.Classify(thing);
-                    if (meta == null) continue;
-                    matched++;
-
-                    if (BookKeyProvider.TryGetKey(thing, out var key) &&
-                        cache != null &&
-                        cache.Contains(key))
-                    {
-                        continue;
-                    }
-
-                    if (PendingBookQueue.Enqueue(meta, worker))
-                        enqueued++;
+                    cached++;
+                    continue;
                 }
+
+                if (PendingBookQueue.Enqueue(meta, worker, mapOverride))
+                    enqueued++;
             }
 
             if (matched > 0)
             {
-                Log.Message($"[RimTalk LE] Production scan near {worker.LabelShort}: books {matched}, enqueued {enqueued}.");
+                Log.Message($"[RimTalk LE] Produced books via {recipeDef?.defName ?? "recipe"}: matched {matched}, enqueued {enqueued}, cached {cached}.");
+            }
+
+            if (enqueued > 0)
+            {
+                BookSynopsisProcessor.Tick();
             }
         }
     }

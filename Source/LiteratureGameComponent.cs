@@ -1,6 +1,7 @@
 using RimTalk_LiteratureExpansion.art;
 using RimTalk_LiteratureExpansion.events;
 using RimTalk_LiteratureExpansion.events.quests;
+using RimTalk_LiteratureExpansion.scanner.production;
 using RimTalk_LiteratureExpansion.synopsis;
 using Verse;
 

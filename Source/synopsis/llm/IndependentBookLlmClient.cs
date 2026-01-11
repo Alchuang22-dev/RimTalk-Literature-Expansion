@@ -150,10 +150,110 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         private static bool TryGetActiveConfig(out ApiConfig config)
         {
             config = null;
+            var leSettings = LiteratureMod.Settings;
+            if (leSettings != null && !leSettings.useRimTalkApi)
+            {
+                var api = leSettings.api;
+                if (api == null)
+                {
+                    Log.Warning("[RimTalk LE] Independent API settings are missing.");
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(api.baseUrl) ||
+                    string.IsNullOrWhiteSpace(api.model))
+                {
+                    Log.Warning("[RimTalk LE] Independent API settings are incomplete (baseUrl/model).");
+                    return false;
+                }
+
+                config = new ApiConfig
+                {
+                    IsEnabled = true,
+                    Provider = AIProvider.Custom,
+                    ApiKey = api.apiKey ?? string.Empty,
+                    BaseUrl = api.baseUrl ?? string.Empty,
+                    CustomModelName = api.model ?? string.Empty,
+                    SelectedModel = "Custom"
+                };
+
+                if (!HasUsableEndpoint(config))
+                {
+                    Log.Warning("[RimTalk LE] Independent API endpoint is missing.");
+                    config = null;
+                    return false;
+                }
+
+                return true;
+            }
+
             var settings = Settings.Get();
             if (settings == null) return false;
-            config = settings.GetActiveConfig();
-            return config != null;
+
+            if (settings.UseSimpleConfig)
+            {
+                if (!string.IsNullOrWhiteSpace(settings.SimpleApiKey))
+                {
+                    config = new ApiConfig
+                    {
+                        ApiKey = settings.SimpleApiKey,
+                        Provider = AIProvider.Google,
+                        SelectedModel = settings.IsUsingFallbackModel ? Constant.FallbackCloudModel : Constant.DefaultCloudModel,
+                        IsEnabled = true
+                    };
+                }
+                return config != null;
+            }
+
+            if (settings.UseCloudProviders)
+            {
+                if (settings.CloudConfigs == null || settings.CloudConfigs.Count == 0) return false;
+
+                for (int i = 0; i < settings.CloudConfigs.Count; i++)
+                {
+                    int index = (settings.CurrentCloudConfigIndex + i) % settings.CloudConfigs.Count;
+                    var candidate = settings.CloudConfigs[index];
+                    if (candidate == null || !candidate.IsValid()) continue;
+                    if (!HasUsableEndpoint(candidate))
+                    {
+                        Log.Warning($"[RimTalk LE] Skipping config without endpoint (provider={candidate.Provider}).");
+                        continue;
+                    }
+
+                    settings.CurrentCloudConfigIndex = index;
+                    config = candidate;
+                    return true;
+                }
+                return false;
+            }
+
+            var localConfig = settings.LocalConfig;
+            if (localConfig != null && localConfig.IsValid())
+            {
+                if (!HasUsableEndpoint(localConfig))
+                {
+                    Log.Warning("[RimTalk LE] Local config missing Base URL for independent requests.");
+                    return false;
+                }
+                config = localConfig;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasUsableEndpoint(ApiConfig config)
+        {
+            if (config == null) return false;
+
+            if (config.Provider == AIProvider.Custom || config.Provider == AIProvider.Local)
+                return !string.IsNullOrWhiteSpace(config.BaseUrl);
+
+            if (config.Provider == AIProvider.Player2)
+                return true;
+
+            var endpoint = GetProviderEndpointUrl(config.Provider);
+            return !string.IsNullOrWhiteSpace(endpoint);
         }
 
         private static string ResolveModel(ApiConfig config)

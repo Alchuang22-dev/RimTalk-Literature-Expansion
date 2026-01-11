@@ -44,6 +44,17 @@ namespace RimTalk_LiteratureExpansion.scanner.queue
             return true;
         }
 
+        public static bool Enqueue(BookMeta meta, Pawn author, Map mapOverride)
+        {
+            if (meta == null || meta.Thing == null || meta.Thing.DestroyedOrNull()) return false;
+            if (!BookKeyProvider.TryGetKey(meta.Thing, mapOverride, out var key)) return false;
+            if (Keys.Contains(key.Id)) return false;
+
+            Queue.Enqueue(new PendingBookRecord(key, meta, author));
+            Keys.Add(key.Id);
+            return true;
+        }
+
         public static bool TryDequeue(out PendingBookRecord record)
         {
             record = null;

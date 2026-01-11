@@ -54,7 +54,7 @@ namespace RimTalk_LiteratureExpansion.journal
         {
             if (thing == null) return false;
             if (thing.def == null) return false;
-            return thing.def.IsTable || thing.def.IsWorkTable;
+            return thing.def.IsTable;
         }
     }
 }
