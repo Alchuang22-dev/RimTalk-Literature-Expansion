@@ -7,7 +7,7 @@
     <reportString>writing a journal entry.</reportString>
     <casualInterruptible>true</casualInterruptible>
     <playerInterruptible>true</playerInterruptible>
-    <checkOverrideOnDamageMode>Always</checkOverrideOnDamageMode>
+    <checkOverrideOnDamage>Always</checkOverrideOnDamage>
   </JobDef>
 
   <ThingDef ParentName="BookBase">

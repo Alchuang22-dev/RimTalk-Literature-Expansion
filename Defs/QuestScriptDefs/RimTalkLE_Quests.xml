@@ -7,6 +7,16 @@
     <isRootSpecial>true</isRootSpecial>
     <questAvailableLetterDef>NewQuest</questAvailableLetterDef>
     <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->RimTalk LE Advertisement</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->RimTalk LE advert quest (debug placeholder).</li>
+      </rulesStrings>
+    </questDescriptionRules>
     <root Class="QuestNode_Sequence" />
   </QuestScriptDef>
   <QuestScriptDef>
@@ -16,6 +26,16 @@
     <isRootSpecial>true</isRootSpecial>
     <questAvailableLetterDef>NewQuest</questAvailableLetterDef>
     <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <questNameRules>
+      <rulesStrings>
+        <li>questName->RimTalk LE Warning</li>
+      </rulesStrings>
+    </questNameRules>
+    <questDescriptionRules>
+      <rulesStrings>
+        <li>questDescription->RimTalk LE warning quest (debug placeholder).</li>
+      </rulesStrings>
+    </questDescriptionRules>
     <root Class="QuestNode_Sequence" />
   </QuestScriptDef>
 </Defs>
