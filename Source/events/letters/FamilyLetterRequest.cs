@@ -33,7 +33,7 @@ namespace RimTalk_LiteratureExpansion.events.letters
         {
             return
 $@"Write a personal letter from a colonist's relative who lives outside the colony.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""

@@ -198,7 +198,7 @@ namespace RimTalk_LiteratureExpansion.events
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
             return
 $@"Rewrite a quest description in the quest issuer's voice.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""

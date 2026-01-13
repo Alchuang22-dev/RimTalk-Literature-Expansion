@@ -12,7 +12,7 @@ namespace RimTalk_LiteratureExpansion.art
             int tokenTarget = GetTokenTarget();
             return
 $@"You write in-world art descriptions for RimWorld objects.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""
@@ -62,3 +62,4 @@ Constraints:
         }
     }
 }
+

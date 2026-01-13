@@ -57,7 +57,7 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         private static string BuildPrompt()
         {
             var template = LoadTemplate();
-            template = template.Replace("{{LANG}}", RimTalk.Data.Constant.Lang);
+            template = template.Replace("{{LANG}}", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang);
             template = template.Replace("{{SUMMARY_MAX_CHARS}}", SynopsisTokenPolicy.PromptSynopsisMaxChars.ToString());
             template = template.Replace("{{SUMMARY_MAX_SENTENCES}}", SynopsisTokenPolicy.SynopsisMaxSentences.ToString());
             return template;
@@ -87,3 +87,4 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         }
     }
 }
+

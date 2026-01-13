@@ -30,7 +30,7 @@ namespace RimTalk_LiteratureExpansion.synopsis
             int tokenTarget = GetTokenTarget();
             return
 $@"You write the in-world text content of a RimWorld book.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""

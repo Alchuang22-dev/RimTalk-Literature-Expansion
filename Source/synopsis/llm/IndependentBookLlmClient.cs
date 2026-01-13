@@ -198,7 +198,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                     {
                         ApiKey = settings.SimpleApiKey,
                         Provider = AIProvider.Google,
-                        SelectedModel = settings.IsUsingFallbackModel ? Constant.FallbackCloudModel : Constant.DefaultCloudModel,
+                        SelectedModel = settings.IsUsingFallbackModel ? RimTalkConstantShim.FallbackCloudModel : RimTalkConstantShim.DefaultCloudModel,
                         IsEnabled = true
                     };
                 }
@@ -269,10 +269,10 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 return config.CustomModelName;
 
             if (!string.IsNullOrWhiteSpace(config.SelectedModel) &&
-                !string.Equals(config.SelectedModel, Constant.ChooseModel, StringComparison.OrdinalIgnoreCase))
+                !string.Equals(config.SelectedModel, RimTalkConstantShim.ChooseModel, StringComparison.OrdinalIgnoreCase))
                 return config.SelectedModel;
 
-            return Constant.DefaultCloudModel;
+            return RimTalkConstantShim.DefaultCloudModel;
         }
 
         private static string ResolveEndpoint(ApiConfig config, string model)

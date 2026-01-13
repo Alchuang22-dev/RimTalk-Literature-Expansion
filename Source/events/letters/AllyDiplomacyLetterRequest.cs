@@ -31,7 +31,7 @@ namespace RimTalk_LiteratureExpansion.events.letters
         {
             return
 $@"Write a friendly diplomatic letter from an allied faction to the player colony.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""

@@ -49,7 +49,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
         {
             return
 $@"Write a merchant advertisement quest from the issuing faction.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""

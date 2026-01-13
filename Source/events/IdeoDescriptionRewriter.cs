@@ -167,7 +167,7 @@ namespace RimTalk_LiteratureExpansion.events
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
             return
 $@"Write 3-5 sentences of in-universe flavor to append to an ideology description.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""

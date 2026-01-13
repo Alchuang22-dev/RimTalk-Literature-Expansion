@@ -57,7 +57,7 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
             int tokenTarget = GetTokenTarget();
             int storyTarget = tokenTarget + LiteratureSettingsDef.StoryTokenBonus;
             return
-$@"Write in {RimTalk.Data.Constant.Lang}. Return JSON only.
+$@"Write in {RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""
@@ -112,3 +112,4 @@ Constraints:
         }
     }
 }
+

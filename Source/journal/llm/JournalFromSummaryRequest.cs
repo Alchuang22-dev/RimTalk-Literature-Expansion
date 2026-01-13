@@ -51,7 +51,7 @@ namespace RimTalk_LiteratureExpansion.journal.llm
             int tokenTarget = GetTokenTarget();
             return
 $@"Write a personal diary entry from the pawn's point of view.
-Write in {Constant.Lang}. Return JSON only.
+Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""title""
