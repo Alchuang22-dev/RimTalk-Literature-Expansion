@@ -53,7 +53,11 @@ namespace RimTalk_LiteratureExpansion.settings
 
             listing.CheckboxLabeled("RimTalkLE_Settings_AllowBooks".Translate(), ref settings.enabled);
             listing.Gap(6f);
-            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArt".Translate(), ref settings.allowArtEdits);
+            listing.Label("RimTalkLE_Settings_AllowArt".Translate());
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArtBuildings".Translate(), ref settings.allowArtBuildingEdits);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArtWeapons".Translate(), ref settings.allowArtWeaponEdits);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArtApparel".Translate(), ref settings.allowArtApparelEdits);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowArtLabels".Translate(), ref settings.allowArtLabelEdits);
             listing.Gap(6f);
             listing.CheckboxLabeled("RimTalkLE_Settings_UseRimTalkApi".Translate(), ref settings.useRimTalkApi);
             listing.Gap(12f);

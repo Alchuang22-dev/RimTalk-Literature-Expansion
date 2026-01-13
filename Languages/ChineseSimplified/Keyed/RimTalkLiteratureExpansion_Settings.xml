@@ -3,6 +3,9 @@
   <RimTalkLE_Settings_Category>RimTalk 文学扩展</RimTalkLE_Settings_Category>
   <RimTalkLE_Settings_AllowBooks>允许修改书籍</RimTalkLE_Settings_AllowBooks>
   <RimTalkLE_Settings_AllowArt>允许修改艺术品</RimTalkLE_Settings_AllowArt>
+  <RimTalkLE_Settings_AllowArtBuildings>允许修改建筑</RimTalkLE_Settings_AllowArtBuildings>
+  <RimTalkLE_Settings_AllowArtWeapons>允许修改武器</RimTalkLE_Settings_AllowArtWeapons>
+  <RimTalkLE_Settings_AllowArtApparel>允许修改服装和装备</RimTalkLE_Settings_AllowArtApparel>
   <RimTalkLE_Settings_UseRimTalkApi>使用 RimTalk 的 API 设置</RimTalkLE_Settings_UseRimTalkApi>
   <RimTalkLE_Settings_StandaloneApi>独立 API</RimTalkLE_Settings_StandaloneApi>
   <RimTalkLE_Settings_BaseUrl>Base URL</RimTalkLE_Settings_BaseUrl>
@@ -59,4 +62,5 @@
   <RimTalkLE_Quest_Warning_DescThreat>若未支付，将遭到报复。</RimTalkLE_Quest_Warning_DescThreat>
   <RimTalkLE_Quest_Warning_DescTiming>你有{0}天可接受任务，接受后需在{1}天内送达白银。</RimTalkLE_Quest_Warning_DescTiming>
   <RimTalkLE_Quest_Warning_Expiry>警告已过期。</RimTalkLE_Quest_Warning_Expiry>
+  <RimTalkLE_Settings_AllowArtLabels>允许修改艺术品名称/描述</RimTalkLE_Settings_AllowArtLabels>
 </LanguageData>

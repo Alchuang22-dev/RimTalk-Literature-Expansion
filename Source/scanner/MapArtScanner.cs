@@ -22,7 +22,6 @@
  */
 using RimTalk_LiteratureExpansion.art;
 using RimTalk_LiteratureExpansion.scanner.queue;
-using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -34,10 +33,9 @@ namespace RimTalk_LiteratureExpansion.scanner
         public static void Scan(Map map)
         {
             if (map == null) return;
-            var settings = LiteratureMod.Settings;
-            if (settings != null && !settings.allowArtEdits)
+            if (!RimTalk_LiteratureExpansion.integration.ArtCacheUtil.IsArtEditingEnabled())
             {
-                Log.Message($"[RimTalk LE] Art scan skipped: allowArtEdits disabled (map {map.uniqueID}).");
+                Log.Message($"[RimTalk LE] Art scan skipped: art category edits disabled (map {map.uniqueID}, {RimTalk_LiteratureExpansion.integration.ArtCacheUtil.DescribeArtSettings()}).");
                 return;
             }
 
@@ -59,6 +57,7 @@ namespace RimTalk_LiteratureExpansion.scanner
             int cached = 0;
             int noArtComp = 0;
             int notShowable = 0;
+            int notEligible = 0;
 
             for (int i = 0; i < things.Count; i++)
             {
@@ -67,18 +66,16 @@ namespace RimTalk_LiteratureExpansion.scanner
 
                 var comp = thing.TryGetComp<RimWorld.CompArt>();
                 if (comp == null)
-                {
                     noArtComp++;
-                    continue;
-                }
-                if (!comp.CanShowArt)
-                {
+                else if (!comp.CanShowArt)
                     notShowable++;
-                    continue;
-                }
 
                 var meta = ArtClassifier.Classify(thing);
-                if (meta == null) continue;
+                if (meta == null)
+                {
+                    notEligible++;
+                    continue;
+                }
                 matched++;
 
                 if (ArtKeyProvider.TryGetKey(meta.Thing, out var key) &&
@@ -95,11 +92,11 @@ namespace RimTalk_LiteratureExpansion.scanner
 
             if (matched > 0)
             {
-                Log.Message($"[RimTalk LE] Scan map {map.uniqueID}: art {matched}, enqueued {enqueued}, cached {cached}, noComp {noArtComp}, notShowable {notShowable}.");
+                Log.Message($"[RimTalk LE] Scan map {map.uniqueID}: art {matched}, enqueued {enqueued}, cached {cached}, noComp {noArtComp}, notShowable {notShowable}, notEligible {notEligible}.");
             }
             else
             {
-                Log.Message($"[RimTalk LE] Scan map {map.uniqueID}: no art matched (noComp {noArtComp}, notShowable {notShowable}).");
+                Log.Message($"[RimTalk LE] Scan map {map.uniqueID}: no art matched (noComp {noArtComp}, notShowable {notShowable}, notEligible {notEligible}).");
             }
         }
     }

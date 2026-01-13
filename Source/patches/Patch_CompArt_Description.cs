@@ -15,7 +15,8 @@ namespace RimTalk_LiteratureExpansion.patches
         public static bool Prefix(CompArt __instance, ref TaggedString __result)
         {
             if (__instance?.parent == null) return true;
-            if (!ArtCacheUtil.IsArtEditingEnabled()) return true;
+            if (ArtCacheUtil.IsArtTabOverrideSuppressed) return true;
+            if (!ArtCacheUtil.AllowsArtTabEdit(__instance.parent)) return true;
 
             if (ArtCacheUtil.TryGetRecord(__instance.parent, out var record) &&
                 !string.IsNullOrWhiteSpace(record.Text))

@@ -15,7 +15,8 @@ namespace RimTalk_LiteratureExpansion.patches
         {
             if (__instance?.parent == null) return true;
             if (__instance.parent.StyleSourcePrecept != null) return true;
-            if (!ArtCacheUtil.IsArtEditingEnabled()) return true;
+            if (ArtCacheUtil.IsArtTabOverrideSuppressed) return true;
+            if (!ArtCacheUtil.AllowsArtTabEdit(__instance.parent)) return true;
 
             if (ArtCacheUtil.TryGetRecord(__instance.parent, out var record) &&
                 !string.IsNullOrWhiteSpace(record.Title))

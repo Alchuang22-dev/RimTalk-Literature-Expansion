@@ -8,7 +8,9 @@
  * Fields:
  * - enabled: allow book edits
  * - useRimTalkApi: if true, reuse RimTalk Settings_Api / ApiConfig at runtime
- * - allowArtEdits: allow art description edits
+ * - allowArtBuildingEdits: allow art edits for buildings
+ * - allowArtWeaponEdits: allow art edits for weapons
+ * - allowArtApparelEdits: allow art edits for apparel/gear
  *
  * Responsibilities:
  * - ExposeData() for save/load of settings.
@@ -28,7 +30,12 @@ namespace RimTalk_LiteratureExpansion.settings
         public bool useRimTalkApi = true;
         public LiteratureSettingsApi api = new LiteratureSettingsApi();
         public int synopsisTokenTarget = LiteratureSettingsDef.DefaultSynopsisTokenTarget;
+        // Legacy: kept for migration from older settings saves.
         public bool allowArtEdits = false;
+        public bool allowArtLabelEdits = false;
+        public bool allowArtBuildingEdits = false;
+        public bool allowArtWeaponEdits = false;
+        public bool allowArtApparelEdits = false;
         public List<string> questRewriteAllowList = new List<string>();
         public bool allowIdeoDescriptionRewrite = false;
         public bool allowLetterTextRewrite = false;
@@ -42,6 +49,10 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Deep.Look(ref api, "api");
             Scribe_Values.Look(ref synopsisTokenTarget, "synopsisTokenTarget", LiteratureSettingsDef.DefaultSynopsisTokenTarget);
             Scribe_Values.Look(ref allowArtEdits, "allowArtEdits", false);
+            Scribe_Values.Look(ref allowArtLabelEdits, "allowArtLabelEdits", false);
+            Scribe_Values.Look(ref allowArtBuildingEdits, "allowArtBuildingEdits", false);
+            Scribe_Values.Look(ref allowArtWeaponEdits, "allowArtWeaponEdits", false);
+            Scribe_Values.Look(ref allowArtApparelEdits, "allowArtApparelEdits", false);
             Scribe_Collections.Look(ref questRewriteAllowList, "questRewriteAllowList", LookMode.Value);
             Scribe_Values.Look(ref allowIdeoDescriptionRewrite, "allowIdeoDescriptionRewrite", false);
             Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
@@ -55,6 +66,16 @@ namespace RimTalk_LiteratureExpansion.settings
                 questRewriteAllowList = new List<string>();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && letterRewriteAllowList == null)
                 letterRewriteAllowList = new List<string>();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                bool anyCategory = allowArtBuildingEdits || allowArtWeaponEdits || allowArtApparelEdits;
+                if (allowArtEdits && !anyCategory)
+                {
+                    allowArtBuildingEdits = true;
+                    allowArtWeaponEdits = true;
+                    allowArtApparelEdits = true;
+                }
+            }
         }
     }
 }

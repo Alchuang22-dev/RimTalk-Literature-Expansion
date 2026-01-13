@@ -38,9 +38,13 @@ namespace RimTalk_LiteratureExpansion.art
             AuthorName = CompArt?.AuthorName ?? string.Empty;
 
             if (CompArt != null && CompArt.Active)
+            {
                 OriginalDescription = CompArt.GenerateImageDescription().ToString();
+            }
             else
-                OriginalDescription = string.Empty;
+            {
+                OriginalDescription = def?.description ?? string.Empty;
+            }
         }
     }
 }

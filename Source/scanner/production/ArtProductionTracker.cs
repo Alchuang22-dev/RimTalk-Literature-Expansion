@@ -6,7 +6,6 @@
  */
 using RimTalk_LiteratureExpansion.art;
 using RimTalk_LiteratureExpansion.scanner.queue;
-using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -18,11 +17,25 @@ namespace RimTalk_LiteratureExpansion.scanner.production
         public static void NotifyGenerated(Thing thing)
         {
             if (thing == null || thing.DestroyedOrNull()) return;
-            var settings = LiteratureMod.Settings;
-            if (settings != null && !settings.allowArtEdits) return;
+            if (!RimTalk_LiteratureExpansion.integration.ArtCacheUtil.IsArtEditingEnabled())
+            {
+                Log.Message($"[RimTalk LE] Art generation skipped: art category edits disabled ({RimTalk_LiteratureExpansion.integration.ArtCacheUtil.DescribeArtSettings()}).");
+                return;
+            }
 
             var meta = ArtClassifier.Classify(thing);
-            if (meta == null) return;
+            if (meta == null)
+            {
+                var comp = thing.TryGetComp<RimWorld.CompArt>();
+                if (comp != null)
+                {
+                    var settings = RimTalk_LiteratureExpansion.settings.LiteratureMod.Settings;
+                    bool allowLabelEdits = settings != null && settings.allowArtLabelEdits;
+                    if (!RimTalk_LiteratureExpansion.art.ArtEditPolicy.ShouldGenerate(thing, allowLabelEdits))
+                        Log.Message($"[RimTalk LE] Art generation skipped: not eligible ({thing.LabelCap}, {thing.def?.defName}).");
+                }
+                return;
+            }
 
             var cache = LiteratueSaveData.Current?.ArtCache;
             if (ArtKeyProvider.TryGetKey(thing, out var key) &&

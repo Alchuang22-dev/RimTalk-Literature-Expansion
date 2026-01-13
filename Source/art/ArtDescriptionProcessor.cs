@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using RimTalk_LiteratureExpansion.scanner.queue;
-using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using Verse;
@@ -12,16 +11,33 @@ namespace RimTalk_LiteratureExpansion.art
     {
         private const int MaxAttempts = 3;
         private static bool _processing;
+        private static bool _loggedDisabled;
 
         public static void Tick()
         {
-            var settings = LiteratureMod.Settings;
-            if (settings != null && !settings.allowArtEdits) return;
+            if (!RimTalk_LiteratureExpansion.integration.ArtCacheUtil.IsArtEditingEnabled())
+            {
+                if (!_loggedDisabled)
+                {
+                    Log.Message($"[RimTalk LE] Art processing disabled ({RimTalk_LiteratureExpansion.integration.ArtCacheUtil.DescribeArtSettings()}).");
+                    _loggedDisabled = true;
+                }
+                return;
+            }
+            _loggedDisabled = false;
 
             if (_processing) return;
             if (!PendingArtQueue.TryDequeue(out var record)) return;
-            if (record == null || record.Meta == null) return;
-            if (record.Meta.Thing == null || record.Meta.Thing.DestroyedOrNull()) return;
+            if (record == null || record.Meta == null)
+            {
+                Log.Message("[RimTalk LE] Art queue record invalid; skip.");
+                return;
+            }
+            if (record.Meta.Thing == null || record.Meta.Thing.DestroyedOrNull())
+            {
+                Log.Message($"[RimTalk LE] Art record thing invalid; skip {record.Meta.DefName ?? "unknown"}.");
+                return;
+            }
 
             Log.Message($"[RimTalk LE] Processing art {record.Meta.ThingLabel} ({record.Meta.DefName}).");
 

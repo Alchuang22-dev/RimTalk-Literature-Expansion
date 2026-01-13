@@ -1,0 +1,28 @@
+/*
+ * Purpose:
+ * - Override descriptions for non-CompArt items using cached art text.
+ */
+using HarmonyLib;
+using RimTalk_LiteratureExpansion.integration;
+using RimWorld;
+using Verse;
+
+namespace RimTalk_LiteratureExpansion.patches
+{
+    [HarmonyPatch(typeof(ThingWithComps), "get_DescriptionFlavor")]
+    public static class Patch_ThingWithComps_DescriptionFlavor
+    {
+        public static void Postfix(ThingWithComps __instance, ref string __result)
+        {
+            if (__instance == null) return;
+            if (__instance.TryGetComp<CompArt>() != null) return;
+            if (!ArtCacheUtil.AllowsDescriptionEdit(__instance)) return;
+
+            if (ArtCacheUtil.TryGetRecord(__instance, out var record) &&
+                ArtCacheUtil.TryBuildDescription(record, string.Empty, out var description))
+            {
+                __result = description;
+            }
+        }
+    }
+}

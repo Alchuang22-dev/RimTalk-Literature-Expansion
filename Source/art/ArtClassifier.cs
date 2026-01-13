@@ -1,4 +1,4 @@
-using RimWorld;
+using RimTalk_LiteratureExpansion.settings;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.art
@@ -9,9 +9,10 @@ namespace RimTalk_LiteratureExpansion.art
         {
             if (thing == null) return null;
 
-            var comp = thing.TryGetComp<CompArt>();
-            if (comp == null) return null;
-            if (!comp.CanShowArt) return null;
+            var settings = LiteratureMod.Settings;
+            bool allowLabelEdits = settings != null && settings.allowArtLabelEdits;
+            if (!ArtEditPolicy.ShouldGenerate(thing, allowLabelEdits))
+                return null;
 
             return new ArtMeta(thing);
         }

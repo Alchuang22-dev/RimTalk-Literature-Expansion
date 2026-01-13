@@ -2,6 +2,7 @@ using System.Text;
 using RimTalk.Data;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.synopsis;
+using Verse;
 
 namespace RimTalk_LiteratureExpansion.art
 {
@@ -34,6 +35,21 @@ Constraints:
             sb.AppendLine("[Artwork]");
             sb.AppendLine($"ThingLabel: {meta.ThingLabel}");
             sb.AppendLine($"DefName: {meta.DefName}");
+
+            var def = meta.Thing?.def;
+            if (def != null)
+            {
+                sb.AppendLine($"Category: {def.category}");
+                sb.AppendLine($"IsArtBuilding: {def.IsArt}");
+                sb.AppendLine($"IsWeapon: {def.IsWeapon}");
+                sb.AppendLine($"IsApparel: {def.IsApparel}");
+            }
+
+            if (meta.CompArt != null)
+                sb.AppendLine($"HasArtTag: {meta.CompArt.CanShowArt}");
+
+            if (meta.Thing?.TryGetComp<RimWorld.CompBladelinkWeapon>() != null)
+                sb.AppendLine("PersonaWeapon: True");
 
             if (meta.Quality.HasValue)
                 sb.AppendLine($"Quality: {meta.Quality.Value}");
