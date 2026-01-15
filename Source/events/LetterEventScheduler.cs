@@ -7,6 +7,7 @@ using RimTalk_LiteratureExpansion.events.letters;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.events
@@ -19,9 +20,6 @@ namespace RimTalk_LiteratureExpansion.events
         private const int FamilyRetryTicks = GenDate.TicksPerDay * 3;
         private const int FamilyMinIntervalTicks = GenDate.TicksPerDay * 10;
         private const int FamilyMaxIntervalTicks = GenDate.TicksPerDay * 25;
-        private const int FriendOpinionThreshold = Pawn_RelationsTracker.FriendOpinionThreshold;
-        private const int FriendCandidateLimit = 40;
-
         private static int _nextCheckTick;
         private static bool _diplomacyPending;
         private static bool _familyPending;
@@ -118,7 +116,7 @@ namespace RimTalk_LiteratureExpansion.events
             task.ContinueWith(t =>
             {
                 var spec = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
-                EnqueueAction(() => ApplyAllyDiplomacyResult(spec, faction, map));
+                LongEventHandler.ExecuteWhenFinished(() => ApplyAllyDiplomacyResult(spec, faction, map));
             }, TaskScheduler.Default);
         }
 
@@ -159,19 +157,44 @@ namespace RimTalk_LiteratureExpansion.events
 
         private static void TryScheduleFamilyLetter(LiteratueSaveData data, int tick)
         {
-            if (_familyPending) return;
+            if (_familyPending)
+            {
+                Log.Message("[RimTalk LE] [Letter] Family letter pending; skip schedule.");
+                return;
+            }
             if (data.NextFamilyLetterTick <= 0)
                 data.NextFamilyLetterTick = tick + Rand.RangeInclusive(FamilyMinIntervalTicks, FamilyMaxIntervalTicks);
             if (tick < data.NextFamilyLetterTick) return;
-            if (AIService.IsBusy()) return;
+            if (AIService.IsBusy())
+            {
+                Log.Message("[RimTalk LE] [Letter] Family letter skipped: AIService busy.");
+                return;
+            }
 
             if (!TryPickFamilyLetterPawns(out var colonist, out var relative, out var relationLabel, out var map))
             {
+                Log.Message("[RimTalk LE] [Letter] Family letter skipped: no eligible relatives.");
                 data.NextFamilyLetterTick = tick + FamilyRetryTicks;
                 return;
             }
 
-            var request = FamilyLetterRequest.BuildRequest(colonist, colonist, relative, relationLabel);
+            if (!LetterGiftResolver.TryResolveGift(null, relative?.Faction, out var giftSample))
+            {
+                Log.Message("[RimTalk LE] [Letter] Family letter skipped: gift sampling failed.");
+                data.NextFamilyLetterTick = tick + FamilyRetryTicks;
+                return;
+            }
+
+            string giftDefName = giftSample?.def?.defName ?? string.Empty;
+            string giftLabel = giftSample?.LabelCap ?? string.Empty;
+
+            if (giftSample is MinifiedThing mt && mt.InnerThing != null)
+            {
+                giftDefName = mt.InnerThing.def?.defName ?? giftDefName;
+                giftLabel = mt.InnerThing.LabelCap; // 或 mt.InnerThing.def.label.CapitalizeFirst()
+            }
+            Log.Message($"[RimTalk LE] [Letter] Gift sample: def='{giftDefName}', label='{giftLabel}'.");
+            var request = FamilyLetterRequest.BuildRequest(relative, colonist, relative, relationLabel, giftDefName, giftLabel);
             if (request == null)
             {
                 data.NextFamilyLetterTick = tick + FamilyRetryTicks;
@@ -185,11 +208,12 @@ namespace RimTalk_LiteratureExpansion.events
             task.ContinueWith(t =>
             {
                 var spec = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
-                EnqueueAction(() => ApplyFamilyLetterResult(spec, colonist, relative, map));
+                Log.Message($"[RimTalk LE] [Letter] Family letter LLM completed (null={spec == null}).");
+                LongEventHandler.ExecuteWhenFinished(() => ApplyFamilyLetterResult(spec, colonist, relative, map, giftDefName));
             }, TaskScheduler.Default);
         }
 
-        private static void ApplyFamilyLetterResult(FamilyLetterSpec spec, Pawn colonist, Pawn relative, Map map)
+        private static void ApplyFamilyLetterResult(FamilyLetterSpec spec, Pawn colonist, Pawn relative, Map map, string giftDefName)
         {
             _familyPending = false;
 
@@ -204,15 +228,14 @@ namespace RimTalk_LiteratureExpansion.events
                 return;
             }
 
-            if (!LetterGiftResolver.TryResolveGift(spec.GiftKind, out var giftDef, out var giftCount))
+            if (string.IsNullOrWhiteSpace(giftDefName) ||
+                !LetterGiftResolver.TryResolveGift(giftDefName, relative?.Faction, out var gift))
             {
+                Log.Message($"[RimTalk LE] [Letter] Gift resolve failed: giftDefName='{giftDefName}', specGiftKind='{spec.GiftKind ?? ""}'.");
                 data.NextFamilyLetterTick = tick + FamilyRetryTicks;
                 Log.Message("[RimTalk LE] [Letter] Family letter gift resolution failed; retry scheduled.");
                 return;
             }
-
-            var gift = ThingMaker.MakeThing(giftDef);
-            gift.stackCount = giftCount;
 
             var dropSpot = DropCellFinder.TradeDropSpot(map);
             DropPodUtility.DropThingsNear(dropSpot, map, Gen.YieldSingle(gift), canRoofPunch: false, forbid: false);
@@ -232,7 +255,7 @@ namespace RimTalk_LiteratureExpansion.events
             if (!giftNote.NullOrEmpty())
                 body = $"{body}\n\n{giftNote}";
 
-            var giftLine = "RimTalkLE_Letter_GiftLine".Translate(gift.LabelCap, giftCount.ToString());
+            var giftLine = "RimTalkLE_Letter_GiftLine".Translate(gift.LabelCap, gift.stackCount.ToString());
             if (!giftLine.NullOrEmpty())
                 body = $"{body}\n\n{giftLine}";
 
@@ -240,6 +263,7 @@ namespace RimTalk_LiteratureExpansion.events
                 ? new LookTargets(colonist)
                 : new LookTargets(map.Center, map);
 
+            // Use the ReceiveLetter overload to ensure the letter is actually pushed to the stack (and clickable).
             var letter = LetterMaker.MakeLetter(label, body, LetterDefOf.PositiveEvent, target);
             Find.LetterStack.ReceiveLetter(letter, LetterTextRewriter.CustomLetterDebugInfo);
             data.NextFamilyLetterTick = tick + Rand.RangeInclusive(FamilyMinIntervalTicks, FamilyMaxIntervalTicks);
@@ -297,19 +321,33 @@ namespace RimTalk_LiteratureExpansion.events
             if (colonists == null || colonists.Count == 0) return false;
 
             var candidates = new List<(Pawn colonist, Pawn relative, string relation, int priority)>();
+            int relatedSeen = 0;
+            int visible = 0;
+            int offMap = 0;
+            int missingDirect = 0;
             for (int i = 0; i < colonists.Count; i++)
             {
                 var pawn = colonists[i];
                 if (pawn?.relations == null) continue;
 
-                var relations = pawn.relations.DirectRelations;
-                for (int j = 0; j < relations.Count; j++)
+                var relatedPawns = pawn.relations.RelatedPawns.ToList();
+                relatedSeen += relatedPawns.Count;
+                for (int j = 0; j < relatedPawns.Count; j++)
                 {
-                    var relation = relations[j];
-                    var other = relation.otherPawn;
+                    var other = relatedPawns[j];
+                    if (!ShouldShowSocialRelation(pawn, other)) continue;
+                    visible++;
                     if (!IsValidRelative(other, map)) continue;
+                    offMap++;
 
-                    string label = relation.def?.label ?? "relative";
+                    // Prefer labels derived from RimWorld's "most important relation" helpers.
+                    // This avoids relying on DirectRelations (which can be incomplete / asymmetric even when RelatedPawns contains the pawn).
+                    string label = GetAccurateRelationLabel(pawn, other);
+                    if (label.NullOrEmpty())
+                    {
+                        missingDirect++;
+                        continue;
+                    }
                     int priority = GetOffMapRelationPriority(other, map);
                     candidates.Add((pawn, other, label, priority));
                 }
@@ -317,10 +355,9 @@ namespace RimTalk_LiteratureExpansion.events
 
             if (candidates.Count == 0)
             {
-                TryAddFriendCandidates(colonists, map, candidates);
+                Log.Message($"[RimTalk LE] [Letter] No family candidates: colonists={colonists.Count} related={relatedSeen} visible={visible} offMap={offMap} missingDirect={missingDirect}.");
+                return false;
             }
-
-            if (candidates.Count == 0) return false;
 
             int bestPriority = candidates.Max(c => c.priority);
             var topCandidates = candidates.Where(c => c.priority == bestPriority).ToList();
@@ -328,58 +365,97 @@ namespace RimTalk_LiteratureExpansion.events
             colonist = chosen.colonist;
             relative = chosen.relative;
             relationLabel = chosen.relation;
+            Log.Message($"[RimTalk LE] [Letter] Picked family pair: colonist={colonist.LabelShortCap}, relative={relative.LabelShortCap}, relation={relationLabel}, priority={bestPriority}.");
             return true;
         }
 
-        private static bool IsValidRelative(Pawn pawn, Map map)
+        private static string GetAccurateRelationLabel(Pawn colonist, Pawn relative)
+        {
+            // relative = sender (殖民地外亲属)
+            // colonist = recipient (殖民者)
+
+            if (colonist == null || relative == null)
+                return null;
+
+            PawnRelationDef relFromSender = null;
+            try
+            {
+                // 核心：始终从 sender 视角查询关系
+                relFromSender = relative.GetMostImportantRelation(colonist);
+            }
+            catch
+            {
+                relFromSender = null;
+            }
+
+            if (relFromSender == null)
+                return null;
+
+            // label 描述的是“colonist 在 sender 眼中的身份”
+            return relFromSender.GetGenderSpecificLabel(colonist);
+        }
+
+        private static bool IsValidRelative(Pawn pawn, Map homeMap)
         {
             if (pawn == null || pawn.Dead) return false;
             if (pawn.RaceProps?.Humanlike != true) return false;
-            if (pawn.Spawned && pawn.Map == map) return false;
+
+            // Exclude any pawn currently held by the *home* colony map (including carried babies / pawns in containers).
+            // This avoids cases where an in-colony pawn writes an "outside the colony" letter.
+            if (homeMap != null && pawn.MapHeld == homeMap) return false;
+
+            // Exclude pawns physically spawned on the home colony map.
+            if (pawn.Spawned && pawn.Map == homeMap) return false;
+
+            // Eligible "off-map" relatives include:
+            // - Pawns traveling in caravans (player faction or otherwise)
+            // - Pawns spawned on some other map (e.g., temporary maps, quest maps)
+            // - World pawns (not currently spawned on any map)
+            //
+            // We intentionally DO NOT require IsWorldPawn(), because caravan pawns and pawns on other maps
+            // may not be flagged as world pawns in some modded edge cases.
+            if (pawn.IsCaravanMember()) return true;
+            if (pawn.Spawned && pawn.Map != null && pawn.Map != homeMap) return true;
+            if (pawn.IsWorldPawn()) return true;
+
+            return false;
+        }
+
+        private static bool ShouldShowSocialRelation(Pawn pawn, Pawn other)
+        {
+            if (pawn?.relations == null || other == null) return false;
+            if (other.relations == null || other.relations.hidePawnRelations) return false;
+            if (pawn.relations.hidePawnRelations) return false;
+            if (other.Name == null || other.Name.Numerical) return false;
+            if (!other.relations.everSeenByPlayer) return false;
             return true;
         }
 
-        private static void TryAddFriendCandidates(
-            IList<Pawn> colonists,
-            Map map,
-            List<(Pawn colonist, Pawn relative, string relation, int priority)> candidates)
-        {
-            if (colonists == null || colonists.Count == 0) return;
-            var worldPawns = Find.WorldPawns?.AllPawnsAlive;
-            if (worldPawns == null || worldPawns.Count == 0) return;
-
-            string friendLabel = "RimTalkLE_Letter_RelationFriend".Translate();
-            int added = 0;
-
-            for (int i = 0; i < colonists.Count; i++)
-            {
-                var colonist = colonists[i];
-                if (colonist?.relations == null) continue;
-
-                for (int j = 0; j < worldPawns.Count; j++)
-                {
-                    var other = worldPawns[j];
-                    if (other == null || other == colonist) continue;
-                    if (!IsValidRelative(other, map)) continue;
-
-                    if (colonist.relations.OpinionOf(other) < FriendOpinionThreshold)
-                        continue;
-
-                    int priority = GetOffMapRelationPriority(other, map);
-                    candidates.Add((colonist, other, friendLabel, priority));
-                    added++;
-                    if (added >= FriendCandidateLimit)
-                        return;
-                }
-            }
-        }
-
-        private static int GetOffMapRelationPriority(Pawn pawn, Map map)
+        private static int GetOffMapRelationPriority(Pawn pawn, Map homeMap)
         {
             if (pawn == null) return 0;
-            if (pawn.Spawned && pawn.Map == map) return 0;
-            if (pawn.Faction == Faction.OfPlayer && pawn.IsColonist) return 2;
-            if (pawn.Faction == Faction.OfPlayer) return 1;
+
+            // Not actually off-map.
+            if (pawn.Spawned && pawn.Map == homeMap) return 0;
+            if (homeMap != null && pawn.MapHeld == homeMap) return 0;
+
+            // Prioritize:
+            // 1) Player faction pawns traveling with a caravan (best "far from home" narrative fit)
+            // 2) Any caravan pawn
+            // 3) Player faction pawns spawned on another map (e.g., another base / quest map)
+            // 4) Player faction world pawns (e.g., at settlements, downed/held elsewhere, etc.)
+            // 5) Non-player world pawns (still valid relatives, but lower priority)
+            bool isPlayer = pawn.Faction == Faction.OfPlayer;
+
+            if (pawn.IsCaravanMember())
+                return isPlayer ? 50 : 40;
+
+            if (pawn.Spawned && pawn.Map != null && pawn.Map != homeMap)
+                return isPlayer ? 35 : 25;
+
+            if (pawn.IsWorldPawn())
+                return isPlayer ? 30 : 10;
+
             return 0;
         }
     }
