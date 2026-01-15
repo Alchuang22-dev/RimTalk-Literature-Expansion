@@ -24,6 +24,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using RimTalk.Data;
 using RimTalk.Service;
+using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using Verse;
@@ -57,10 +59,23 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         private static string BuildPrompt()
         {
             var template = LoadTemplate();
-            template = template.Replace("{{LANG}}", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang);
-            template = template.Replace("{{SUMMARY_MAX_CHARS}}", SynopsisTokenPolicy.PromptSynopsisMaxChars.ToString());
-            template = template.Replace("{{SUMMARY_MAX_SENTENCES}}", SynopsisTokenPolicy.SynopsisMaxSentences.ToString());
-            return template;
+            var settings = LiteratureMod.Settings;
+            return PromptTemplateUtil.Resolve(
+                settings?.promptMemorySummary,
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("SUMMARY_MAX_CHARS", SynopsisTokenPolicy.PromptSynopsisMaxChars.ToString()),
+                ("SUMMARY_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            var template = LoadTemplate();
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("SUMMARY_MAX_CHARS", SynopsisTokenPolicy.PromptSynopsisMaxChars.ToString()),
+                ("SUMMARY_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()));
         }
 
         private static string LoadTemplate()

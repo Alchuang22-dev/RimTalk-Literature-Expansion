@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
+  <RimTalkLE_Settings_PagePrompts>提示词</RimTalkLE_Settings_PagePrompts>
+  <RimTalkLE_Settings_PromptPageTitle>独立 LLM 提示词</RimTalkLE_Settings_PromptPageTitle>
+  <RimTalkLE_Settings_PromptPageNote>留空则使用内置默认值。可用占位符 {{LANG}}、{{TOKEN_TARGET}} 等。</RimTalkLE_Settings_PromptPageNote>
+  <RimTalkLE_Settings_PromptReset>恢复默认</RimTalkLE_Settings_PromptReset>
+  <RimTalkLE_Settings_Prompt_Synopsis>书籍内容提示词</RimTalkLE_Settings_Prompt_Synopsis>
+  <RimTalkLE_Settings_Prompt_Art>艺术品描述提示词</RimTalkLE_Settings_Prompt_Art>
+  <RimTalkLE_Settings_Prompt_PersonaWeapon>人格武器提示词</RimTalkLE_Settings_Prompt_PersonaWeapon>
+  <RimTalkLE_Settings_Prompt_Journal>日记生成提示词</RimTalkLE_Settings_Prompt_Journal>
+  <RimTalkLE_Settings_Prompt_MemorySummary>记忆摘要提示词</RimTalkLE_Settings_Prompt_MemorySummary>
+  <RimTalkLE_Settings_Prompt_BookFromSummary>摘要转书籍提示词</RimTalkLE_Settings_Prompt_BookFromSummary>
+  <RimTalkLE_Settings_Prompt_LetterRewrite>信件改写提示词</RimTalkLE_Settings_Prompt_LetterRewrite>
+  <RimTalkLE_Settings_Prompt_IdeoRewrite>文化改写提示词</RimTalkLE_Settings_Prompt_IdeoRewrite>
+  <RimTalkLE_Settings_Prompt_QuestAdvert>广告任务提示词</RimTalkLE_Settings_Prompt_QuestAdvert>
+  <RimTalkLE_Settings_Prompt_QuestWarning>警告任务提示词</RimTalkLE_Settings_Prompt_QuestWarning>
+  <RimTalkLE_Settings_PageMain>常规</RimTalkLE_Settings_PageMain>
+  <RimTalkLE_Settings_PageFilters>过滤器</RimTalkLE_Settings_PageFilters>
   <RimTalkLE_Settings_Category>RimTalk 文学扩展</RimTalkLE_Settings_Category>
   <RimTalkLE_Settings_AllowBooks>允许修改书籍</RimTalkLE_Settings_AllowBooks>
   <RimTalkLE_Settings_AllowArt>允许修改艺术品</RimTalkLE_Settings_AllowArt>
@@ -15,6 +31,8 @@
   <RimTalkLE_Settings_Debug>调试</RimTalkLE_Settings_Debug>
   <RimTalkLE_Settings_TokenTarget>书籍内容目标 token 数</RimTalkLE_Settings_TokenTarget>
   <RimTalkLE_Settings_ClearBookCache>清除书籍缓存</RimTalkLE_Settings_ClearBookCache>
+  <RimTalkLE_Settings_ClearArtCache>清除艺术缓存</RimTalkLE_Settings_ClearArtCache>
+  <RimTalkLE_Settings_RescanArtBooks>重新扫描艺术/书籍</RimTalkLE_Settings_RescanArtBooks>
   <RimTalkLE_Settings_Show>显示</RimTalkLE_Settings_Show>
   <RimTalkLE_Settings_Hide>隐藏</RimTalkLE_Settings_Hide>
   <RimTalkLE_Settings_Empty>（空）</RimTalkLE_Settings_Empty>

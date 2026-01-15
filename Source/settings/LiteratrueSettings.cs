@@ -40,6 +40,16 @@ namespace RimTalk_LiteratureExpansion.settings
         public bool allowIdeoDescriptionRewrite = false;
         public bool allowLetterTextRewrite = false;
         public List<string> letterRewriteAllowList = new List<string>();
+        public string promptSynopsis = string.Empty;
+        public string promptArt = string.Empty;
+        public string promptPersonaWeapon = string.Empty;
+        public string promptJournal = string.Empty;
+        public string promptMemorySummary = string.Empty;
+        public string promptBookFromSummary = string.Empty;
+        public string promptLetterRewrite = string.Empty;
+        public string promptIdeoRewrite = string.Empty;
+        public string promptQuestAdvert = string.Empty;
+        public string promptQuestWarning = string.Empty;
 
         public override void ExposeData()
         {
@@ -57,6 +67,16 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Values.Look(ref allowIdeoDescriptionRewrite, "allowIdeoDescriptionRewrite", false);
             Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
             Scribe_Collections.Look(ref letterRewriteAllowList, "letterRewriteAllowList", LookMode.Value);
+            Scribe_Values.Look(ref promptSynopsis, "promptSynopsis", string.Empty);
+            Scribe_Values.Look(ref promptArt, "promptArt", string.Empty);
+            Scribe_Values.Look(ref promptPersonaWeapon, "promptPersonaWeapon", string.Empty);
+            Scribe_Values.Look(ref promptJournal, "promptJournal", string.Empty);
+            Scribe_Values.Look(ref promptMemorySummary, "promptMemorySummary", string.Empty);
+            Scribe_Values.Look(ref promptBookFromSummary, "promptBookFromSummary", string.Empty);
+            Scribe_Values.Look(ref promptLetterRewrite, "promptLetterRewrite", string.Empty);
+            Scribe_Values.Look(ref promptIdeoRewrite, "promptIdeoRewrite", string.Empty);
+            Scribe_Values.Look(ref promptQuestAdvert, "promptQuestAdvert", string.Empty);
+            Scribe_Values.Look(ref promptQuestWarning, "promptQuestWarning", string.Empty);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && api == null)
                 api = new LiteratureSettingsApi();

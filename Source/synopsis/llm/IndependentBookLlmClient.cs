@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,6 +12,7 @@ using RimTalk;
 using RimTalk.Data;
 using RimTalk.Util;
 using RimTalk_LiteratureExpansion.settings;
+using UnityEngine.Networking;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.synopsis.llm
@@ -22,11 +24,11 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         private const int MaxOutputTokensCap = 2048;
         private const int OutputTokenOverhead = 120;
         private const string Player2GameClientId = "019a8368-b00b-72bc-b367-2825079dc6fb";
-        private const string Player2LocalBaseUrl = "http://localhost:4315/v1";
-        private const string Player2LocalHealthUrl = "http://localhost:4315/v1/health";
-        private const string Player2LocalLoginUrl = "http://localhost:4315/v1/login/web/" + Player2GameClientId;
-        private const int Player2LocalHealthTimeoutMs = 2000;
-        private const int Player2LocalLoginTimeoutMs = 3000;
+        private const string Player2LocalBaseUrl = "http://localhost:4315";
+        private const string Player2LocalHealthUrl = Player2LocalBaseUrl + "/v1/health";
+        private const string Player2LocalLoginUrl = Player2LocalBaseUrl + "/v1/login/web/" + Player2GameClientId;
+        private const int Player2LocalHealthTimeoutSeconds = 2;
+        private const int Player2LocalLoginTimeoutSeconds = 3;
         private static string _player2LocalKey;
         private static DateTime _player2LocalKeyCheckedAt = DateTime.MinValue;
         private static readonly TimeSpan Player2LocalCheckInterval = TimeSpan.FromSeconds(30);
@@ -85,7 +87,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
             string endpoint = ResolveEndpoint(config, model);
             if (config.Provider == AIProvider.Player2 && usePlayer2Local)
-                endpoint = $"{Player2LocalBaseUrl}/chat/completions";
+                endpoint = $"{Player2LocalBaseUrl}/v1/chat/completions";
             if (string.IsNullOrWhiteSpace(endpoint))
             {
                 Log.Warning($"[RimTalk LE] [Req {requestId}] Missing endpoint for independent book request.");
@@ -295,6 +297,10 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
         private static string GetProviderEndpointUrl(AIProvider provider)
         {
+            var endpoint = TryGetProviderEndpointFromRegistry(provider);
+            if (!string.IsNullOrWhiteSpace(endpoint))
+                return endpoint;
+
             switch (provider.ToString())
             {
                 case "OpenAI":
@@ -312,9 +318,26 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 case "AlibabaCN":
                     return "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
                 case "Player2":
-                    return "https://api.player2.game/v1";
+                    return "https://api.player2.game";
                 default:
                     return string.Empty;
+            }
+        }
+
+        private static string TryGetProviderEndpointFromRegistry(AIProvider provider)
+        {
+            try
+            {
+                var registryType = typeof(AIProvider).Assembly.GetType("RimTalk.AIProviderRegistry");
+                if (registryType == null) return null;
+                var method = registryType.GetMethod("GetEndpointUrl",
+                    BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(AIProvider) }, null);
+                if (method == null) return null;
+                return method.Invoke(null, new object[] { provider }) as string;
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -324,7 +347,9 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             var trimmed = baseUrl.Trim().TrimEnd('/');
             if (trimmed.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
                 return trimmed;
-            return trimmed + "/chat/completions";
+            if (trimmed.EndsWith("/v1", StringComparison.OrdinalIgnoreCase))
+                return trimmed + "/chat/completions";
+            return trimmed + "/v1/chat/completions";
         }
 
         private static string NormalizeEndpoint(string baseUrl)
@@ -531,16 +556,19 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         {
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create(Player2LocalHealthUrl);
-                request.Method = "GET";
-                request.Timeout = Player2LocalHealthTimeoutMs;
-
-                using (var response = (HttpWebResponse)await request.GetResponseAsync())
-                    return response.StatusCode == HttpStatusCode.OK;
+                using var healthRequest = UnityWebRequest.Get(Player2LocalHealthUrl);
+                healthRequest.timeout = Player2LocalHealthTimeoutSeconds;
+                await SendUnityWebRequestAsync(healthRequest);
+                if (healthRequest.isNetworkError || healthRequest.isHttpError)
+                {
+                    Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local health check failed: {healthRequest.responseCode} - {healthRequest.error}");
+                    return false;
+                }
+                return healthRequest.responseCode == (long)HttpStatusCode.OK;
             }
             catch (Exception ex)
             {
-                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local health check failed: {ex.Message}");
+                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local health check exception: {ex.Message}");
                 return false;
             }
         }
@@ -549,32 +577,38 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         {
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create(Player2LocalLoginUrl);
-                request.Method = "POST";
-                request.ContentType = "application/json";
-                request.Timeout = Player2LocalLoginTimeoutMs;
+                using var loginRequest = new UnityWebRequest(Player2LocalLoginUrl, "POST");
+                loginRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes("{}"));
+                loginRequest.downloadHandler = new DownloadHandlerBuffer();
+                loginRequest.SetRequestHeader("Content-Type", "application/json");
+                loginRequest.timeout = Player2LocalLoginTimeoutSeconds;
 
-                byte[] bodyRaw = Encoding.UTF8.GetBytes("{}");
-                request.ContentLength = bodyRaw.Length;
-
-                using (var stream = await request.GetRequestStreamAsync())
+                await SendUnityWebRequestAsync(loginRequest);
+                if (loginRequest.isNetworkError || loginRequest.isHttpError)
                 {
-                    await stream.WriteAsync(bodyRaw, 0, bodyRaw.Length);
+                    Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local login failed: {loginRequest.responseCode} - {loginRequest.error}");
+                    return null;
                 }
 
-                using (var response = (HttpWebResponse)await request.GetResponseAsync())
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                {
-                    string text = await reader.ReadToEndAsync();
-                    var auth = JsonUtil.DeserializeFromJson<Player2LocalAuthResponse>(text);
-                    return auth?.ApiKey ?? string.Empty;
-                }
+                var auth = JsonUtil.DeserializeFromJson<Player2LocalAuthResponse>(loginRequest.downloadHandler.text);
+                if (!string.IsNullOrWhiteSpace(auth?.ApiKey))
+                    return auth.ApiKey;
+
+                Log.Warning($"[RimTalk LE] [Req {requestId}] Player2 local app responded but no API key in response.");
+                return null;
             }
             catch (Exception ex)
             {
-                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local login failed: {ex.Message}");
+                Log.Message($"[RimTalk LE] [Req {requestId}] Player2 local login exception: {ex.Message}");
                 return null;
             }
+        }
+
+        private static Task SendUnityWebRequestAsync(UnityWebRequest request)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            request.SendWebRequest().completed += _ => tcs.SetResult(true);
+            return tcs.Task;
         }
 
         [DataContract]

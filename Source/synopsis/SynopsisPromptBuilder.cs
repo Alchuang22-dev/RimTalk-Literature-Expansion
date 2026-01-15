@@ -18,6 +18,7 @@
  */
 using System.Text;
 using RimTalk.Data;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.book;
 
@@ -28,6 +29,33 @@ namespace RimTalk_LiteratureExpansion.synopsis
         public static string BuildPrompt(BookMeta meta)
         {
             int tokenTarget = GetTokenTarget();
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptSynopsis,
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int tokenTarget = GetTokenTarget();
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        private static string BuildTemplate(int tokenTarget)
+        {
             return
 $@"You write the in-world text content of a RimWorld book.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.

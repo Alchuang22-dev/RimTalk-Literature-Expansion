@@ -38,10 +38,11 @@ namespace RimTalk_LiteratureExpansion.art
             var compArt = thing.TryGetComp<CompArt>();
             bool hasArtTag = compArt != null && compArt.CanShowArt;
 
-            bool isPersonaWeapon = thing.TryGetComp<CompBladelinkWeapon>() != null;
-            if (isPersonaWeapon)
+            var bladelink = thing.TryGetComp<CompBladelinkWeapon>();
+            if (bladelink != null)
             {
                 if (!allowWeapons) return ArtEditTarget.None;
+                if (bladelink.CodedPawn == null) return ArtEditTarget.None;
                 return ArtEditTarget.Label | ArtEditTarget.Description;
             }
 

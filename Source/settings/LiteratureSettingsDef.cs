@@ -20,6 +20,7 @@ namespace RimTalk_LiteratureExpansion.settings
         public const int MaxBaseUrlLength = 200;
         public const int MaxApiKeyLength = 200;
         public const int MaxModelLength = 120;
+        public const int MaxPromptLength = 8000;
 
         public const int DefaultSynopsisTokenTarget = 340;
         public const int MinSynopsisTokenTarget = 120;
@@ -28,5 +29,6 @@ namespace RimTalk_LiteratureExpansion.settings
 
         public const float RowHeight = 24f;
         public const float FieldGap = 6f;
+        public const float PromptTextHeight = 140f;
     }
 }

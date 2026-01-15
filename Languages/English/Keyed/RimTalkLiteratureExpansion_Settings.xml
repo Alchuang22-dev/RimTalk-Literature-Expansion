@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
   <RimTalkLE_Settings_Category>RimTalk Literature Expansion</RimTalkLE_Settings_Category>
+  <RimTalkLE_Settings_PageMain>General</RimTalkLE_Settings_PageMain>
+  <RimTalkLE_Settings_PageFilters>Filters</RimTalkLE_Settings_PageFilters>
+  <RimTalkLE_Settings_PagePrompts>Prompts</RimTalkLE_Settings_PagePrompts>
+  <RimTalkLE_Settings_PromptPageTitle>Independent LLM prompts</RimTalkLE_Settings_PromptPageTitle>
+  <RimTalkLE_Settings_PromptPageNote>Empty uses built-in defaults. Placeholders like {{LANG}} and {{TOKEN_TARGET}} will be replaced when available.</RimTalkLE_Settings_PromptPageNote>
+  <RimTalkLE_Settings_PromptReset>Reset to default</RimTalkLE_Settings_PromptReset>
+  <RimTalkLE_Settings_Prompt_Synopsis>Book synopsis prompt</RimTalkLE_Settings_Prompt_Synopsis>
+  <RimTalkLE_Settings_Prompt_Art>Art description prompt</RimTalkLE_Settings_Prompt_Art>
+  <RimTalkLE_Settings_Prompt_PersonaWeapon>Persona weapon prompt</RimTalkLE_Settings_Prompt_PersonaWeapon>
+  <RimTalkLE_Settings_Prompt_Journal>Journal entry prompt</RimTalkLE_Settings_Prompt_Journal>
+  <RimTalkLE_Settings_Prompt_MemorySummary>Memory summary prompt</RimTalkLE_Settings_Prompt_MemorySummary>
+  <RimTalkLE_Settings_Prompt_BookFromSummary>Book from summary prompt</RimTalkLE_Settings_Prompt_BookFromSummary>
+  <RimTalkLE_Settings_Prompt_LetterRewrite>Letter rewrite prompt</RimTalkLE_Settings_Prompt_LetterRewrite>
+  <RimTalkLE_Settings_Prompt_IdeoRewrite>Ideology rewrite prompt</RimTalkLE_Settings_Prompt_IdeoRewrite>
+  <RimTalkLE_Settings_Prompt_QuestAdvert>Quest advert prompt</RimTalkLE_Settings_Prompt_QuestAdvert>
+  <RimTalkLE_Settings_Prompt_QuestWarning>Quest warning prompt</RimTalkLE_Settings_Prompt_QuestWarning>
   <RimTalkLE_Settings_AllowBooks>Allow book edits</RimTalkLE_Settings_AllowBooks>
   <RimTalkLE_Settings_AllowArt>Allow art edits</RimTalkLE_Settings_AllowArt>
   <RimTalkLE_Settings_AllowArtBuildings>Allow art edits: buildings</RimTalkLE_Settings_AllowArtBuildings>
@@ -16,6 +32,8 @@
   <RimTalkLE_Settings_Debug>Debug</RimTalkLE_Settings_Debug>
   <RimTalkLE_Settings_TokenTarget>Book content target tokens</RimTalkLE_Settings_TokenTarget>
   <RimTalkLE_Settings_ClearBookCache>Clear cached book synopses</RimTalkLE_Settings_ClearBookCache>
+  <RimTalkLE_Settings_ClearArtCache>Clear cached art descriptions</RimTalkLE_Settings_ClearArtCache>
+  <RimTalkLE_Settings_RescanArtBooks>Rescan art/books</RimTalkLE_Settings_RescanArtBooks>
   <RimTalkLE_Settings_TextOverrides>LLM text overrides</RimTalkLE_Settings_TextOverrides>
   <RimTalkLE_Settings_AllowIdeoDescriptionRewrite>Rewrite ideology descriptions</RimTalkLE_Settings_AllowIdeoDescriptionRewrite>
   <RimTalkLE_Settings_AllowLetterTextRewrite>Rewrite letter text (non-custom)</RimTalkLE_Settings_AllowLetterTextRewrite>

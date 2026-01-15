@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using RimTalk.Data;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using Verse;
@@ -56,6 +57,36 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         {
             int tokenTarget = GetTokenTarget();
             int storyTarget = tokenTarget + LiteratureSettingsDef.StoryTokenBonus;
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(tokenTarget, storyTarget);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptBookFromSummary,
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()),
+                ("STORY_TOKEN_TARGET", storyTarget.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int tokenTarget = GetTokenTarget();
+            int storyTarget = tokenTarget + LiteratureSettingsDef.StoryTokenBonus;
+            string template = BuildTemplate(tokenTarget, storyTarget);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()),
+                ("STORY_TOKEN_TARGET", storyTarget.ToString()));
+        }
+
+        private static string BuildTemplate(int tokenTarget, int storyTarget)
+        {
             return
 $@"Write in {RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang}. Return JSON only.
 

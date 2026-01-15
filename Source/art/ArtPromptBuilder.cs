@@ -1,5 +1,6 @@
 using System.Text;
 using RimTalk.Data;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.synopsis;
 using Verse;
@@ -11,6 +12,31 @@ namespace RimTalk_LiteratureExpansion.art
         public static string BuildPrompt(ArtMeta meta)
         {
             int tokenTarget = GetTokenTarget();
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptArt,
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int tokenTarget = GetTokenTarget();
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        private static string BuildTemplate(int tokenTarget)
+        {
             return
 $@"You write in-world art descriptions for RimWorld objects.
 Write in {RimTalk_LiteratureExpansion.RimTalkConstantShim.Lang}. Return JSON only.
@@ -78,4 +104,3 @@ Constraints:
         }
     }
 }
-

@@ -15,7 +15,8 @@ namespace RimTalk_LiteratureExpansion.patches
         public static void Postfix(ThingWithComps __instance, ref string __result)
         {
             if (__instance == null) return;
-            if (__instance.TryGetComp<CompArt>() != null) return;
+            var bladelink = __instance.TryGetComp<CompBladelinkWeapon>();
+            if (bladelink == null && __instance.TryGetComp<CompArt>() != null) return;
             if (!ArtCacheUtil.AllowsDescriptionEdit(__instance)) return;
 
             if (ArtCacheUtil.TryGetRecord(__instance, out var record) &&

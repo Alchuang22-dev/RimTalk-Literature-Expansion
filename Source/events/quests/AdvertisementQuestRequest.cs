@@ -11,6 +11,8 @@
 using System.Collections.Generic;
 using System.Text;
 using RimTalk.Data;
+using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -23,6 +25,8 @@ namespace RimTalk_LiteratureExpansion.events.quests
         private const int TitleMaxChars = 56;
         private const int BodyMaxChars = 900;
         private const int TargetTokens = 220;
+        private const int DefaultOfferDays = 3;
+        private const int DefaultDeliveryDays = 3;
 
         public static TalkRequest BuildRequest(
             Pawn initiator,
@@ -46,6 +50,34 @@ namespace RimTalk_LiteratureExpansion.events.quests
         }
 
         private static string BuildPrompt(int offerDays, int deliveryDays)
+        {
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(offerDays, deliveryDays);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptQuestAdvert,
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", TitleMaxChars.ToString()),
+                ("BODY_MAX_CHARS", BodyMaxChars.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()),
+                ("OFFER_DAYS", offerDays.ToString()),
+                ("DELIVERY_DAYS", deliveryDays.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            string template = BuildTemplate(DefaultOfferDays, DefaultDeliveryDays);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", TitleMaxChars.ToString()),
+                ("BODY_MAX_CHARS", BodyMaxChars.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()),
+                ("OFFER_DAYS", DefaultOfferDays.ToString()),
+                ("DELIVERY_DAYS", DefaultDeliveryDays.ToString()));
+        }
+
+        private static string BuildTemplate(int offerDays, int deliveryDays)
         {
             return
 $@"Write a merchant advertisement quest from the issuing faction.

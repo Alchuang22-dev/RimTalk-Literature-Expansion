@@ -14,6 +14,7 @@ using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using Verse;
@@ -49,6 +50,33 @@ namespace RimTalk_LiteratureExpansion.journal.llm
         private static string BuildPrompt()
         {
             int tokenTarget = GetTokenTarget();
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptJournal,
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int tokenTarget = GetTokenTarget();
+            string template = BuildTemplate(tokenTarget);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
+                ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
+                ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
+                ("TOKEN_TARGET", tokenTarget.ToString()));
+        }
+
+        private static string BuildTemplate(int tokenTarget)
+        {
             return
 $@"Write a personal diary entry from the pawn's point of view.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.

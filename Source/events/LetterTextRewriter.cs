@@ -20,6 +20,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RimTalk.Data;
 using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using RimWorld;
 using UnityEngine;
@@ -44,6 +45,7 @@ namespace RimTalk_LiteratureExpansion.events
         public const string CustomLetterDebugInfo = "RimTalkLE_CustomLetter";
         private const int TimeoutSeconds = 60;
         private const int TargetTokens = 140;
+        private const int DefaultCharLimit = 360;
         private const string LogPrefix = "[RimTalk LE] [LetterRewrite]";
 
         private static readonly Dictionary<int, PendingLetterRewrite> Pending = new Dictionary<int, PendingLetterRewrite>();
@@ -147,6 +149,29 @@ namespace RimTalk_LiteratureExpansion.events
         private static string BuildPrompt(string originalText)
         {
             int charLimit = Mathf.Clamp(originalText?.Length ?? 0, 240, 520);
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(charLimit);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptLetterRewrite,
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("CHAR_LIMIT", charLimit.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int charLimit = Mathf.Clamp(DefaultCharLimit, 240, 520);
+            string template = BuildTemplate(charLimit);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("CHAR_LIMIT", charLimit.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()));
+        }
+
+        private static string BuildTemplate(int charLimit)
+        {
             return
 $@"Write 3-5 sentences of in-universe flavor to append to a letter.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.

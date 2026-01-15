@@ -20,6 +20,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RimTalk.Data;
 using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimWorld;
@@ -44,6 +45,7 @@ namespace RimTalk_LiteratureExpansion.events
     {
         private const int TimeoutSeconds = 60;
         private const int TargetTokens = 140;
+        private const int DefaultCharLimit = 360;
         private const int ScanIntervalTicks = GenDate.TicksPerHour;
         private const string LogPrefix = "[RimTalk LE] [IdeoRewrite]";
 
@@ -53,6 +55,7 @@ namespace RimTalk_LiteratureExpansion.events
         private static readonly HashSet<int> Processed = new HashSet<int>();
 
         private static int _nextScanTick;
+        private static int _lastNoColonistLogTick = -1;
 
         public static void Tick()
         {
@@ -90,7 +93,7 @@ namespace RimTalk_LiteratureExpansion.events
                 StartRequest(next);
         }
 
-        public static void TryQueue(Ideo ideo)
+        public static void TryQueue(Ideo ideo, Pawn initiatorOverride = null)
         {
             var settings = LiteratureMod.Settings;
             if (settings == null || !settings.allowIdeoDescriptionRewrite) return;
@@ -101,10 +104,23 @@ namespace RimTalk_LiteratureExpansion.events
             if (Pending.ContainsKey(ideo.id)) return;
 
             string original = ideo.description?.Trim();
-            if (string.IsNullOrWhiteSpace(original)) return;
+            if (string.IsNullOrWhiteSpace(original))
+            {
+                Log.Message($"{LogPrefix} Skip: empty description (id={ideo.id}).");
+                return;
+            }
 
-            var initiator = TryGetAnyColonist();
-            if (initiator == null) return;
+            var initiator = initiatorOverride ?? TryGetAnyColonist();
+            if (initiator == null)
+            {
+                int tick = Find.TickManager?.TicksGame ?? 0;
+                if (tick - _lastNoColonistLogTick > GenDate.TicksPerHour)
+                {
+                    Log.Message($"{LogPrefix} Skip: no colonist available for ideology context.");
+                    _lastNoColonistLogTick = tick;
+                }
+                return;
+            }
 
             var entityTokens = CollectEntityTokens(ideo, original);
             if (IsAlreadyProcessed(ideo.id))
@@ -125,8 +141,20 @@ namespace RimTalk_LiteratureExpansion.events
             var ideos = manager.IdeosListForReading;
             if (ideos == null || ideos.Count == 0) return;
 
+            var initiator = TryGetAnyColonist();
+            if (initiator == null)
+            {
+                int tick = Find.TickManager?.TicksGame ?? 0;
+                if (tick - _lastNoColonistLogTick > GenDate.TicksPerHour)
+                {
+                    Log.Message($"{LogPrefix} Skip scan: no colonist available for ideology context.");
+                    _lastNoColonistLogTick = tick;
+                }
+                return;
+            }
+
             for (int i = 0; i < ideos.Count; i++)
-                TryQueue(ideos[i]);
+                TryQueue(ideos[i], initiator);
         }
 
         private static void StartRequest(PendingIdeoRewrite record)
@@ -165,6 +193,29 @@ namespace RimTalk_LiteratureExpansion.events
         private static string BuildPrompt(string originalDescription)
         {
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
+            var settings = LiteratureMod.Settings;
+            string template = BuildTemplate(charLimit);
+            return PromptTemplateUtil.Resolve(
+                settings?.promptIdeoRewrite,
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("CHAR_LIMIT", charLimit.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()));
+        }
+
+        public static string BuildDefaultPrompt()
+        {
+            int charLimit = Mathf.Clamp(DefaultCharLimit, 240, 520);
+            string template = BuildTemplate(charLimit);
+            return PromptTemplateUtil.ApplyTokens(
+                template,
+                ("LANG", RimTalkConstantShim.Lang),
+                ("CHAR_LIMIT", charLimit.ToString()),
+                ("TARGET_TOKENS", TargetTokens.ToString()));
+        }
+
+        private static string BuildTemplate(int charLimit)
+        {
             return
 $@"Write 3-5 sentences of in-universe flavor to append to an ideology description.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
@@ -273,14 +324,34 @@ Constraints:
 
         private static Pawn TryGetAnyColonist()
         {
+            var pawns = PawnsFinder.AllMaps_FreeColonists;
+            if (pawns != null)
+            {
+                for (int i = 0; i < pawns.Count; i++)
+                {
+                    var pawn = pawns[i];
+                    if (pawn != null) return pawn;
+                }
+            }
+
+            var fallback = PawnsFinder.AllMapsCaravansAndTravellingTransporters_Alive_FreeColonists;
+            if (fallback != null)
+            {
+                for (int i = 0; i < fallback.Count; i++)
+                {
+                    var pawn = fallback[i];
+                    if (pawn != null) return pawn;
+                }
+            }
+
             var maps = Find.Maps;
             if (maps == null) return null;
             for (int i = 0; i < maps.Count; i++)
             {
                 var map = maps[i];
-                var pawns = map?.mapPawns?.FreeColonistsSpawned;
-                if (pawns == null || pawns.Count == 0) continue;
-                return pawns[0];
+                var spawned = map?.mapPawns?.FreeColonistsSpawned;
+                if (spawned == null || spawned.Count == 0) continue;
+                return spawned[0];
             }
             return null;
         }

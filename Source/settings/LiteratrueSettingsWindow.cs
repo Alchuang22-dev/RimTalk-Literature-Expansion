@@ -26,6 +26,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimTalk_LiteratureExpansion.settings.util;
+using RimTalk_LiteratureExpansion.synopsis;
+using RimTalk_LiteratureExpansion.art;
+using RimTalk_LiteratureExpansion.art.llm;
+using RimTalk_LiteratureExpansion.authoring.llm;
+using RimTalk_LiteratureExpansion.journal.llm;
+using RimTalk_LiteratureExpansion.events;
+using RimTalk_LiteratureExpansion.events.quests;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimWorld;
 using UnityEngine;
@@ -35,8 +42,14 @@ namespace RimTalk_LiteratureExpansion.settings
 {
     public static class LiteratureSettingsWindow
     {
-        private static Vector2 _settingsScroll;
-        private static float _settingsViewHeight;
+        private const int PageMain = 0;
+        private const int PageFilters = 1;
+        private const int PagePrompts = 2;
+        private static int _settingsPageIndex;
+        private static Vector2 _settingsScrollMain;
+        private static Vector2 _settingsScrollPrompts;
+        private static float _settingsViewHeightMain;
+        private static float _settingsViewHeightPrompts;
         private static Vector2 _questFilterScroll;
         private static Vector2 _letterFilterScroll;
 
@@ -45,8 +58,42 @@ namespace RimTalk_LiteratureExpansion.settings
             if (settings == null) return;
             settings.api ??= new LiteratureSettingsApi();
 
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, Mathf.Max(_settingsViewHeight, inRect.height));
-            Widgets.BeginScrollView(inRect, ref _settingsScroll, viewRect);
+            float tabHeight = LiteratureSettingsDef.RowHeight;
+            float tabGap = 6f;
+            Rect tabRect = new Rect(inRect.x, inRect.y, inRect.width, tabHeight);
+            DrawPageTabs(tabRect);
+
+            Rect contentRect = new Rect(inRect.x, inRect.y + tabHeight + tabGap, inRect.width,
+                inRect.height - tabHeight - tabGap);
+
+            if (_settingsPageIndex == PageFilters)
+                DrawFiltersPage(contentRect, settings);
+            else if (_settingsPageIndex == PagePrompts)
+                DrawPromptsPage(contentRect, settings);
+            else
+                DrawMainPage(contentRect, settings);
+        }
+
+        private static void DrawPageTabs(Rect rect)
+        {
+            float gap = LiteratureSettingsDef.FieldGap;
+            float thirdWidth = (rect.width - gap * 2f) / 3f;
+            Rect mainRect = new Rect(rect.x, rect.y, thirdWidth, rect.height);
+            Rect filterRect = new Rect(mainRect.xMax + gap, rect.y, thirdWidth, rect.height);
+            Rect promptRect = new Rect(filterRect.xMax + gap, rect.y, thirdWidth, rect.height);
+
+            if (Widgets.ButtonText(mainRect, "RimTalkLE_Settings_PageMain".Translate()))
+                _settingsPageIndex = PageMain;
+            if (Widgets.ButtonText(filterRect, "RimTalkLE_Settings_PageFilters".Translate()))
+                _settingsPageIndex = PageFilters;
+            if (Widgets.ButtonText(promptRect, "RimTalkLE_Settings_PagePrompts".Translate()))
+                _settingsPageIndex = PagePrompts;
+        }
+
+        private static void DrawMainPage(Rect inRect, LiteratureSettings settings)
+        {
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, Mathf.Max(_settingsViewHeightMain, inRect.height));
+            Widgets.BeginScrollView(inRect, ref _settingsScrollMain, viewRect);
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
@@ -126,14 +173,146 @@ namespace RimTalk_LiteratureExpansion.settings
                 }
             }
 
-            listing.Gap(12f);
-            Rect filterPanel = listing.GetRect(300f);
-            DrawFilterColumns(filterPanel, settings);
+            Rect artCacheRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            if (Widgets.ButtonText(artCacheRect, "RimTalkLE_Settings_ClearArtCache".Translate()))
+            {
+                var cache = LiteratueSaveData.Current?.ArtCache;
+                if (cache == null)
+                {
+                    Log.Warning("[RimTalk LE] No active world data; cannot clear art cache.");
+                }
+                else
+                {
+                    int cleared = cache.Clear();
+                    Log.Message($"[RimTalk LE] Cleared {cleared} cached art descriptions.");
+                }
+            }
+
+            Rect rescanRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            if (Widgets.ButtonText(rescanRect, "RimTalkLE_Settings_RescanArtBooks".Translate()))
+            {
+                var maps = Find.Maps;
+                if (maps == null || maps.Count == 0)
+                {
+                    Log.Warning("[RimTalk LE] Manual rescan skipped: no active maps.");
+                }
+                else
+                {
+                    Log.Message($"[RimTalk LE] Manual rescan requested for {maps.Count} maps.");
+                    bool bookEnabled = settings.enabled;
+                    for (int i = 0; i < maps.Count; i++)
+                    {
+                        var map = maps[i];
+                        RimTalk_LiteratureExpansion.scanner.MapArtScanner.Scan(map);
+                        if (bookEnabled)
+                            RimTalk_LiteratureExpansion.scanner.MapBookScanner.Scan(map);
+                        else
+                            Log.Message($"[RimTalk LE] Book scan skipped: books disabled (map {map?.uniqueID ?? -1}).");
+                    }
+                }
+            }
 
             listing.End();
-            if (Event.current.type == EventType.Layout)
-                _settingsViewHeight = listing.CurHeight + 10f;
+            _settingsViewHeightMain = listing.CurHeight + 10f;
             Widgets.EndScrollView();
+        }
+
+        private static void DrawFiltersPage(Rect inRect, LiteratureSettings settings)
+        {
+            DrawFilterColumns(inRect, settings);
+        }
+
+        private static void DrawPromptsPage(Rect inRect, LiteratureSettings settings)
+        {
+            if (settings == null) return;
+
+            if (_settingsViewHeightPrompts < 1f)
+                _settingsViewHeightPrompts = GetPromptPageHeight();
+
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, Mathf.Max(_settingsViewHeightPrompts, inRect.height));
+            Widgets.BeginScrollView(inRect, ref _settingsScrollPrompts, viewRect);
+
+            var listing = new Listing_Standard();
+            listing.Begin(viewRect);
+
+            listing.Label("RimTalkLE_Settings_PromptPageTitle".Translate());
+            listing.Label("RimTalkLE_Settings_PromptPageNote".Translate());
+            listing.Gap(8f);
+
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_Synopsis".Translate(),
+                ref settings.promptSynopsis, SynopsisPromptBuilder.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_Art".Translate(),
+                ref settings.promptArt, ArtPromptBuilder.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_PersonaWeapon".Translate(),
+                ref settings.promptPersonaWeapon, PersonaWeaponRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_Journal".Translate(),
+                ref settings.promptJournal, JournalFromSummaryRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_MemorySummary".Translate(),
+                ref settings.promptMemorySummary, MemorySummaryRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_BookFromSummary".Translate(),
+                ref settings.promptBookFromSummary, BookFromSummaryRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_LetterRewrite".Translate(),
+                ref settings.promptLetterRewrite, LetterTextRewriter.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_IdeoRewrite".Translate(),
+                ref settings.promptIdeoRewrite, IdeoDescriptionRewriter.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_QuestAdvert".Translate(),
+                ref settings.promptQuestAdvert, AdvertisementQuestRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_QuestWarning".Translate(),
+                ref settings.promptQuestWarning, WarningQuestRequest.BuildDefaultPrompt());
+
+            listing.End();
+            _settingsViewHeightPrompts = listing.CurHeight + 10f;
+            Widgets.EndScrollView();
+        }
+
+        private static void DrawPromptField(Listing_Standard listing, string label, ref string value, string defaultText)
+        {
+            if (listing == null) return;
+
+            Rect headerRect = listing.GetRect(LiteratureSettingsDef.RowHeight);
+            float buttonWidth = 140f;
+            Rect labelRect = new Rect(headerRect.x, headerRect.y, headerRect.width - buttonWidth - LiteratureSettingsDef.FieldGap, headerRect.height);
+            Rect buttonRect = new Rect(labelRect.xMax + LiteratureSettingsDef.FieldGap, headerRect.y, buttonWidth, headerRect.height);
+
+            var anchor = Text.Anchor;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = anchor;
+
+            if (Widgets.ButtonText(buttonRect, "RimTalkLE_Settings_PromptReset".Translate()))
+                value = string.Empty;
+
+            Rect areaRect = listing.GetRect(LiteratureSettingsDef.PromptTextHeight);
+            defaultText ??= string.Empty;
+            value ??= string.Empty;
+
+            string displayText = string.IsNullOrWhiteSpace(value) ? defaultText : value;
+            string edited = Widgets.TextArea(areaRect, displayText);
+            edited = ClampPrompt(edited);
+
+            if (string.IsNullOrWhiteSpace(edited) || edited == defaultText)
+                value = string.Empty;
+            else
+                value = edited;
+
+            listing.Gap(8f);
+        }
+
+        private static string ClampPrompt(string value)
+        {
+            if (value == null) return string.Empty;
+            int maxLength = LiteratureSettingsDef.MaxPromptLength;
+            if (maxLength > 0 && value.Length > maxLength)
+                return value.Substring(0, maxLength);
+            return value;
+        }
+
+        private static float GetPromptPageHeight()
+        {
+            float header = Text.LineHeight * 2f + 8f;
+            float row = LiteratureSettingsDef.RowHeight + LiteratureSettingsDef.PromptTextHeight + 8f;
+            const int fieldCount = 10;
+            return header + fieldCount * row + 10f;
         }
 
         private static void DrawQuestFilter(Rect rect, LiteratureSettings settings)

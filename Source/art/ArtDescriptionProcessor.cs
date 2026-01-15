@@ -53,6 +53,22 @@ namespace RimTalk_LiteratureExpansion.art
             record.IncrementAttempts();
             _processing = true;
 
+            var bladelink = record.Meta.Thing.TryGetComp<RimWorld.CompBladelinkWeapon>();
+            if (bladelink != null)
+            {
+                if (bladelink.CodedPawn != null)
+                {
+                    var pawn = bladelink.CodedPawn;
+                    Log.Message($"[RimTalk LE] Persona weapon detected; using bonded pawn context for {record.Meta.DefName}.");
+                    PersonaWeaponAuthoringPipeline.StartGeneration(record.Meta.Thing, pawn, "queue", () => _processing = false);
+                    return;
+                }
+
+                Log.Message($"[RimTalk LE] Persona weapon not bonded; skip {record.Meta.DefName}.");
+                _processing = false;
+                return;
+            }
+
             var contextPawn = ResolveContextPawn(record);
             if (contextPawn == null)
             {
