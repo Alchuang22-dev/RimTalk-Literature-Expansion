@@ -18,6 +18,7 @@
  * - Do not directly invoke AIService.
  * - Do not inject Constant.Instruction.
  */
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -29,6 +30,7 @@ using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.llm;
 using Verse;
+using RimWorld;
 
 namespace RimTalk_LiteratureExpansion.authoring.llm
 {
@@ -41,13 +43,28 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         {
             if (pawn == null) return null;
 
-            var context = PromptService.BuildContext(new List<Pawn> { pawn });
-            var prompt = BuildPrompt();
-
-            return new TalkRequest(prompt, pawn)
+            // Guard against early initialization issues when faction system is not ready
+            if (Find.FactionManager == null || Faction.OfPlayer == null)
             {
-                Context = context
-            };
+                Log.Warning("[RimTalk LE] MemorySummaryRequest.BuildRequest skipped: Faction manager or player faction not initialized.");
+                return null;
+            }
+
+            try
+            {
+                var context = PromptService.BuildContext(new List<Pawn> { pawn });
+                var prompt = BuildPrompt();
+
+                return new TalkRequest(prompt, pawn)
+                {
+                    Context = context
+                };
+            }
+            catch (NullReferenceException ex)
+            {
+                Log.Warning($"[RimTalk LE] MemorySummaryRequest.BuildRequest failed: {ex.Message}. This may happen during pawn generation when internal caches are not ready.");
+                return null;
+            }
         }
 
         public static Task<MemorySummarySpec> QueryAsync(TalkRequest request)
