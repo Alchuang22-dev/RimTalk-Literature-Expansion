@@ -39,7 +39,8 @@ namespace RimTalk_LiteratureExpansion.art
 
             if (CompArt != null && CompArt.Active)
             {
-                OriginalDescription = CompArt.GenerateImageDescription().ToString();
+                var imageDescription = CompArt.GenerateImageDescription();
+                OriginalDescription = imageDescription != null ? imageDescription.ToString() : string.Empty;
             }
             else
             {

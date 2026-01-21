@@ -1,5 +1,6 @@
 using System.Text;
 using RimTalk.Data;
+using RimTalk.Service;
 using RimTalk_LiteratureExpansion.settings;
 using RimWorld;
 using UnityEngine;
@@ -74,6 +75,21 @@ Constraints:
                 sb.AppendLine($"GiftLabel: {giftLabel}");
             sb.AppendLine($"ColonyName: {Find.CurrentMap?.info?.parent?.LabelCap ?? "Colony"}");
             sb.AppendLine($"ColonyWealth: {Mathf.RoundToInt(Find.CurrentMap?.wealthWatcher?.WealthTotal ?? 0f)}");
+
+            var colonistProfile = PromptService.CreatePawnContext(colonist, PromptService.InfoLevel.Short);
+            if (!string.IsNullOrWhiteSpace(colonistProfile))
+            {
+                sb.AppendLine("[RimTalkProfile:Recipient]");
+                sb.AppendLine(colonistProfile);
+            }
+
+            var relativeProfile = PromptService.CreatePawnContext(relative, PromptService.InfoLevel.Short);
+            if (!string.IsNullOrWhiteSpace(relativeProfile))
+            {
+                sb.AppendLine("[RimTalkProfile:Writer]");
+                sb.AppendLine(relativeProfile);
+            }
+
             return sb.ToString().TrimEnd();
         }
     }

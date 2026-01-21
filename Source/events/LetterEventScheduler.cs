@@ -6,6 +6,7 @@ using RimTalk.Service;
 using RimTalk_LiteratureExpansion.events.letters;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage.save;
+using RimTalk_LiteratureExpansion.synopsis.llm;
 using RimWorld;
 using RimWorld.Planet;
 using Verse;
@@ -116,7 +117,7 @@ namespace RimTalk_LiteratureExpansion.events
             task.ContinueWith(t =>
             {
                 var spec = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
-                LongEventHandler.ExecuteWhenFinished(() => ApplyAllyDiplomacyResult(spec, faction, map));
+                EnqueueAction(() => ApplyAllyDiplomacyResult(spec, faction, map));
             }, TaskScheduler.Default);
         }
 
@@ -165,12 +166,6 @@ namespace RimTalk_LiteratureExpansion.events
             if (data.NextFamilyLetterTick <= 0)
                 data.NextFamilyLetterTick = tick + Rand.RangeInclusive(FamilyMinIntervalTicks, FamilyMaxIntervalTicks);
             if (tick < data.NextFamilyLetterTick) return;
-            if (AIService.IsBusy())
-            {
-                Log.Message("[RimTalk LE] [Letter] Family letter skipped: AIService busy.");
-                return;
-            }
-
             if (!TryPickFamilyLetterPawns(out var colonist, out var relative, out var relationLabel, out var map))
             {
                 Log.Message("[RimTalk LE] [Letter] Family letter skipped: no eligible relatives.");
@@ -204,12 +199,12 @@ namespace RimTalk_LiteratureExpansion.events
             _familyPending = true;
             Log.Message($"[RimTalk LE] [Letter] Scheduling family letter for {colonist.LabelShortCap}.");
 
-            var task = AIService.Query<FamilyLetterSpec>(request);
+            var task = IndependentBookLlmClient.QueryJsonAsync<FamilyLetterSpec>(request);
             task.ContinueWith(t =>
             {
                 var spec = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
                 Log.Message($"[RimTalk LE] [Letter] Family letter LLM completed (null={spec == null}).");
-                LongEventHandler.ExecuteWhenFinished(() => ApplyFamilyLetterResult(spec, colonist, relative, map, giftDefName));
+                EnqueueAction(() => ApplyFamilyLetterResult(spec, colonist, relative, map, giftDefName));
             }, TaskScheduler.Default);
         }
 
