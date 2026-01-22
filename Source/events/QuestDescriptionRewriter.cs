@@ -197,17 +197,19 @@ namespace RimTalk_LiteratureExpansion.events
         {
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
             return
-$@"Rewrite a quest description in the quest issuer's voice.
+$@"Generate flavorful quest lore and atmosphere text in the quest issuer's voice.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""
 
 Constraints:
-- Expand the quest details into an in-universe letter, report, or notice from the issuer.
-- Add concrete story details while preserving all factual data from QuestData.
-- Do not change deadlines, rewards, counts, locations, or names.
-- Do not add new numbers or entities.
+- Create only supplementary flavor text (backstory, atmosphere, personal anecdotes) that complements the original quest.
+- Focus on the issuer's perspective: their motivations, past experiences, emotions, or unique insights about this quest.
+- Add immersion through vivid descriptions of environment, mood, or cultural context.
+- Absolutely do NOT repeat or rephrase the original quest objectives or requirements.
+- Preserve all factual data from QuestData but assume the base description already covers the what and how.
+- Do not add new deadlines, rewards, counts, locations, or entity names.
 - Minimum length: at least about 100 tokens.
 - Keep length <= {charLimit} characters (about {TargetTokens} tokens).
 - No markdown, no extra keys.";
