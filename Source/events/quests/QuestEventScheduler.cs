@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LudeonTK;
 using RimTalk_LiteratureExpansion.events;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage.save;
@@ -32,6 +33,7 @@ using Verse;
 
 namespace RimTalk_LiteratureExpansion.events.quests
 {
+
     public static class QuestEventScheduler
     {
         private const int CheckIntervalTicks = GenDate.TicksPerHour;
@@ -75,14 +77,15 @@ namespace RimTalk_LiteratureExpansion.events.quests
             var settings = LiteratureMod.Settings;
             if (settings != null && !settings.enabled) return;
 
-            if (tick < _nextCheckTick) return;
-            _nextCheckTick = tick + CheckIntervalTicks;
+            // TODO: Temporarily disable AdvertisementQuest and WarningQuest automatic scheduling due to option display issues
+            // if (tick < _nextCheckTick) return;
+            // _nextCheckTick = tick + CheckIntervalTicks;
 
-            var data = LiteratueSaveData.Current;
-            if (data == null) return;
+            // var data = LiteratueSaveData.Current;
+            // if (data == null) return;
 
-            TryScheduleAdvertisement(data, tick);
-            TryScheduleWarning(data, tick);
+            // TryScheduleAdvertisement(data, tick);
+            // TryScheduleWarning(data, tick);
         }
 
         public static void TryHandleGiftDelivery(Settlement settlement, List<ActiveTransporterInfo> transporters)
@@ -860,6 +863,28 @@ namespace RimTalk_LiteratureExpansion.events.quests
             if (action == null) return;
             lock (QueueLock)
                 PendingActions.Enqueue(action);
+        }
+
+        [DebugAction("RimTalk LE", "Debug trigger advertisement quest", false, false, false, false, false, 0, false,
+            actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        private static void DebugTriggerAdvertisementQuest()
+        {
+            var data = LiteratueSaveData.Current;
+            if (data == null || Find.TickManager == null) return;
+            int tick = Find.TickManager.TicksGame;
+            data.NextAdvertQuestTick = tick;
+            TryScheduleAdvertisement(data, tick);
+        }
+
+        [DebugAction("RimTalk LE", "Debug trigger warning quest", false, false, false, false, false, 0, false,
+            actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        private static void DebugTriggerWarningQuest()
+        {
+            var data = LiteratueSaveData.Current;
+            if (data == null || Find.TickManager == null) return;
+            int tick = Find.TickManager.TicksGame;
+            data.NextWarningQuestTick = tick;
+            TryScheduleWarning(data, tick);
         }
 
         private sealed class PendingAdvertQuest
