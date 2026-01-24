@@ -103,7 +103,8 @@ namespace RimTalk_LiteratureExpansion.events.letters
             if (source == null || source.Count == 0)
                 source = DefDatabase<ThingDef>.AllDefsListForReading;
 
-            IEnumerable<ThingDef> filtered = source.Where(IsValidBaseDef);
+            // Filter for allowed gift types only
+            IEnumerable<ThingDef> filtered = source.Where(IsAllowedGiftDef);
             if (category.HasValue)
                 filtered = filtered.Where(def => MatchesCategory(def, category.Value));
 
@@ -121,19 +122,15 @@ namespace RimTalk_LiteratureExpansion.events.letters
             return modCandidates.Count > 0 ? modCandidates : candidates;
         }
 
-        private static bool IsValidBaseDef(ThingDef def)
+        private static bool IsAllowedGiftDef(ThingDef def)
         {
             if (def == null) return false;
             if (!def.PlayerAcquirable) return false;
             if (def.tradeability == Tradeability.None) return false;
             if (def.BaseMarketValue <= 0.01f) return false;
             if (!ThingSetMakerUtility.CanGenerate(def)) return false;
-            return true;
-        }
 
-        private static bool IsAllowedGiftDef(ThingDef def)
-        {
-            if (!IsValidBaseDef(def)) return false;
+            // Ensure we only select gifts that are actually allowed types
             return IsNonRawFood(def) || def.IsMedicine || def.IsApparel || IsSmallDecorOrBuilding(def);
         }
 
