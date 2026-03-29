@@ -81,4 +81,12 @@
   <RimTalkLE_Quest_Warning_DescTiming>你有{0}天可接受任务，接受后需在{1}天内送达白银。</RimTalkLE_Quest_Warning_DescTiming>
   <RimTalkLE_Quest_Warning_Expiry>警告已过期。</RimTalkLE_Quest_Warning_Expiry>
   <RimTalkLE_Settings_AllowArtLabels>允许修改艺术品名称/描述</RimTalkLE_Settings_AllowArtLabels>
+  <RimTalkLE_Settings_PageContent>内容</RimTalkLE_Settings_PageContent>
+  <RimTalkLE_Settings_AllowEasterLetters>启用 Source/events/letters 中的彩蛋邮件</RimTalkLE_Settings_AllowEasterLetters>
+  <RimTalkLE_Settings_BookFilter>书籍筛选</RimTalkLE_Settings_BookFilter>
+  <RimTalkLE_Settings_BookFilterHelp>只有勾选的书籍 Def 会生成或改写内容。</RimTalkLE_Settings_BookFilterHelp>
+  <RimTalkLE_Settings_BookFilterNone>未找到可用的书籍 Def。</RimTalkLE_Settings_BookFilterNone>
+  <RimTalkLE_Settings_ArtFilter>艺术品类型筛选</RimTalkLE_Settings_ArtFilter>
+  <RimTalkLE_Settings_ArtFilterHelp>只有勾选的艺术品 Def 会改写名称或描述。</RimTalkLE_Settings_ArtFilterHelp>
+  <RimTalkLE_Settings_ArtFilterNone>未找到可用的艺术品 Def。</RimTalkLE_Settings_ArtFilterNone>
 </LanguageData>

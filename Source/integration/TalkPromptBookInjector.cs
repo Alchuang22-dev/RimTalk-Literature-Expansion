@@ -53,6 +53,9 @@ namespace RimTalk_LiteratureExpansion.integration
                 return;
             }
 
+            if (!BookFilterPolicy.IsAllowed(meta))
+                return;
+
             var cache = LiteratueSaveData.Current?.SynopsisCache;
             if (cache == null) return;
 

@@ -25,6 +25,9 @@ namespace RimTalk_LiteratureExpansion.art
                 return ArtEditTarget.None;
 
             var def = thing.def;
+            if (!ArtDefFilterPolicy.IsAllowed(def))
+                return ArtEditTarget.None;
+
             bool isArtBenchItem = def?.IsArt == true;
             bool isWeapon = def?.IsWeapon == true;
             bool isApparel = def?.IsApparel == true;

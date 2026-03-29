@@ -56,6 +56,7 @@ namespace RimTalk_LiteratureExpansion.scanner.production
 
                 var meta = BookClassifier.Classify(product);
                 if (meta == null) continue;
+                if (!BookFilterPolicy.IsAllowed(meta)) continue;
                 matched++;
 
                 if (BookKeyProvider.TryGetKey(meta.Thing, mapOverride, out var key) &&

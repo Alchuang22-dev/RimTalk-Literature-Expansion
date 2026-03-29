@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.integration;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
@@ -78,6 +79,7 @@ namespace RimTalk_LiteratureExpansion.patches
         {
             record = null;
             if (thing == null || thing.DestroyedOrNull()) return false;
+            if (!BookFilterPolicy.IsAllowed(thing)) return false;
 
             var cache = LiteratueSaveData.Current?.SynopsisCache;
             if (cache == null) return false;

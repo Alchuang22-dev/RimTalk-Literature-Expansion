@@ -119,9 +119,16 @@ namespace RimTalk_LiteratureExpansion.journal
                 var meta = BookClassifier.Classify(journal);
                 if (meta != null)
                 {
-                    ApplyPlaceholder(meta, pawn);
-                    PendingBookQueue.Enqueue(meta, pawn);
-                    Log.Message($"[RimTalk LE] [Journal] Enqueued journal book for LLM (type={meta.Type}).");
+                    if (BookFilterPolicy.IsAllowed(meta))
+                    {
+                        ApplyPlaceholder(meta, pawn);
+                        PendingBookQueue.Enqueue(meta, pawn);
+                        Log.Message($"[RimTalk LE] [Journal] Enqueued journal book for LLM (type={meta.Type}).");
+                    }
+                    else
+                    {
+                        Log.Message($"[RimTalk LE] [Journal] Journal book filtered out by settings ({meta.DefName}).");
+                    }
                 }
                 else
                 {

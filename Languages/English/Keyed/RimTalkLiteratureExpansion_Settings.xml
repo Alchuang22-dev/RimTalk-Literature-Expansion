@@ -2,6 +2,7 @@
 <LanguageData>
   <RimTalkLE_Settings_Category>RimTalk Literature Expansion</RimTalkLE_Settings_Category>
   <RimTalkLE_Settings_PageMain>General</RimTalkLE_Settings_PageMain>
+  <RimTalkLE_Settings_PageContent>Content</RimTalkLE_Settings_PageContent>
   <RimTalkLE_Settings_PageFilters>Filters</RimTalkLE_Settings_PageFilters>
   <RimTalkLE_Settings_PagePrompts>Prompts</RimTalkLE_Settings_PagePrompts>
   <RimTalkLE_Settings_PromptPageTitle>Independent LLM prompts</RimTalkLE_Settings_PromptPageTitle>
@@ -37,6 +38,13 @@
   <RimTalkLE_Settings_TextOverrides>LLM text overrides</RimTalkLE_Settings_TextOverrides>
   <RimTalkLE_Settings_AllowIdeoDescriptionRewrite>Rewrite ideology descriptions</RimTalkLE_Settings_AllowIdeoDescriptionRewrite>
   <RimTalkLE_Settings_AllowLetterTextRewrite>Rewrite letter text (non-custom)</RimTalkLE_Settings_AllowLetterTextRewrite>
+  <RimTalkLE_Settings_AllowEasterLetters>Enable special letters from Source/events/letters</RimTalkLE_Settings_AllowEasterLetters>
+  <RimTalkLE_Settings_BookFilter>Book filter</RimTalkLE_Settings_BookFilter>
+  <RimTalkLE_Settings_BookFilterHelp>Only selected book defs will have content generated or rewritten.</RimTalkLE_Settings_BookFilterHelp>
+  <RimTalkLE_Settings_BookFilterNone>No eligible book defs found.</RimTalkLE_Settings_BookFilterNone>
+  <RimTalkLE_Settings_ArtFilter>Art type filter</RimTalkLE_Settings_ArtFilter>
+  <RimTalkLE_Settings_ArtFilterHelp>Only selected art defs will have names or descriptions rewritten.</RimTalkLE_Settings_ArtFilterHelp>
+  <RimTalkLE_Settings_ArtFilterNone>No eligible art defs found.</RimTalkLE_Settings_ArtFilterNone>
   <RimTalkLE_Settings_QuestFilter>Quest description filter</RimTalkLE_Settings_QuestFilter>
   <RimTalkLE_Settings_QuestFilterHelp>Only selected quest types will have descriptions rewritten.</RimTalkLE_Settings_QuestFilterHelp>
   <RimTalkLE_Settings_QuestFilterExistingNote>Only newly generated quests are rewritten.</RimTalkLE_Settings_QuestFilterExistingNote>

@@ -17,7 +17,10 @@ namespace RimTalk_LiteratureExpansion.integration
         public static bool IsArtEditingEnabled()
         {
             var settings = LiteratureMod.Settings;
+            settings?.EnsureContentFiltersInitialized();
             return settings != null &&
+                   settings.artRewriteAllowList != null &&
+                   settings.artRewriteAllowList.Count > 0 &&
                    (settings.allowArtBuildingEdits || settings.allowArtWeaponEdits || settings.allowArtApparelEdits);
         }
 
@@ -135,7 +138,7 @@ namespace RimTalk_LiteratureExpansion.integration
         {
             var settings = LiteratureMod.Settings;
             if (settings == null) return "settings=null";
-            return $"buildings={settings.allowArtBuildingEdits}, weapons={settings.allowArtWeaponEdits}, apparel={settings.allowArtApparelEdits}, labels={settings.allowArtLabelEdits}";
+            return $"buildings={settings.allowArtBuildingEdits}, weapons={settings.allowArtWeaponEdits}, apparel={settings.allowArtApparelEdits}, labels={settings.allowArtLabelEdits}, allowList={settings.artRewriteAllowList?.Count ?? 0}";
         }
     }
 }

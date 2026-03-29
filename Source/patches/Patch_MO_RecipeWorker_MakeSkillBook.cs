@@ -49,6 +49,7 @@ namespace RimTalk_LiteratureExpansion.patches
 
             var meta = BookClassifier.Classify(product);
             if (meta == null) return;
+            if (!BookFilterPolicy.IsAllowed(meta)) return;
 
             if (!BookKeyProvider.TryGetKey(product, out var key)) return;
 

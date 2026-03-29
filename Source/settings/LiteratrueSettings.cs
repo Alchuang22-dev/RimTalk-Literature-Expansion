@@ -20,6 +20,8 @@
  *   (If you must store API key, keep it in LiteratureSettingsApi with clear UI warnings.)
  */
 using System.Collections.Generic;
+using RimTalk_LiteratureExpansion.art;
+using RimTalk_LiteratureExpansion.book;
 using Verse;
 
 namespace RimTalk_LiteratureExpansion.settings
@@ -36,10 +38,15 @@ namespace RimTalk_LiteratureExpansion.settings
         public bool allowArtBuildingEdits = false;
         public bool allowArtWeaponEdits = false;
         public bool allowArtApparelEdits = false;
+        public List<string> bookRewriteAllowList = new List<string>();
+        public bool bookRewriteAllowListInitialized;
+        public List<string> artRewriteAllowList = new List<string>();
+        public bool artRewriteAllowListInitialized;
         public List<string> questRewriteAllowList = new List<string>();
         public bool allowIdeoDescriptionRewrite = false;
         public bool allowLetterTextRewrite = false;
         public List<string> letterRewriteAllowList = new List<string>();
+        public bool allowEasterLetters = true;
         public string promptSynopsis = string.Empty;
         public string promptArt = string.Empty;
         public string promptPersonaWeapon = string.Empty;
@@ -63,10 +70,15 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Values.Look(ref allowArtBuildingEdits, "allowArtBuildingEdits", false);
             Scribe_Values.Look(ref allowArtWeaponEdits, "allowArtWeaponEdits", false);
             Scribe_Values.Look(ref allowArtApparelEdits, "allowArtApparelEdits", false);
+            Scribe_Collections.Look(ref bookRewriteAllowList, "bookRewriteAllowList", LookMode.Value);
+            Scribe_Values.Look(ref bookRewriteAllowListInitialized, "bookRewriteAllowListInitialized", false);
+            Scribe_Collections.Look(ref artRewriteAllowList, "artRewriteAllowList", LookMode.Value);
+            Scribe_Values.Look(ref artRewriteAllowListInitialized, "artRewriteAllowListInitialized", false);
             Scribe_Collections.Look(ref questRewriteAllowList, "questRewriteAllowList", LookMode.Value);
             Scribe_Values.Look(ref allowIdeoDescriptionRewrite, "allowIdeoDescriptionRewrite", false);
             Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
             Scribe_Collections.Look(ref letterRewriteAllowList, "letterRewriteAllowList", LookMode.Value);
+            Scribe_Values.Look(ref allowEasterLetters, "allowEasterLetters", true);
             Scribe_Values.Look(ref promptSynopsis, "promptSynopsis", string.Empty);
             Scribe_Values.Look(ref promptArt, "promptArt", string.Empty);
             Scribe_Values.Look(ref promptPersonaWeapon, "promptPersonaWeapon", string.Empty);
@@ -82,6 +94,10 @@ namespace RimTalk_LiteratureExpansion.settings
                 api = new LiteratureSettingsApi();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && synopsisTokenTarget <= 0)
                 synopsisTokenTarget = LiteratureSettingsDef.DefaultSynopsisTokenTarget;
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && bookRewriteAllowList == null)
+                bookRewriteAllowList = new List<string>();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && artRewriteAllowList == null)
+                artRewriteAllowList = new List<string>();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && questRewriteAllowList == null)
                 questRewriteAllowList = new List<string>();
             if (Scribe.mode == LoadSaveMode.PostLoadInit && letterRewriteAllowList == null)
@@ -94,6 +110,34 @@ namespace RimTalk_LiteratureExpansion.settings
                     allowArtBuildingEdits = true;
                     allowArtWeaponEdits = true;
                     allowArtApparelEdits = true;
+                }
+
+                EnsureContentFiltersInitialized();
+            }
+        }
+
+        public void EnsureContentFiltersInitialized()
+        {
+            bookRewriteAllowList ??= new List<string>();
+            artRewriteAllowList ??= new List<string>();
+
+            if (!bookRewriteAllowListInitialized)
+            {
+                var allBooks = BookFilterPolicy.GetAllEligibleDefNames();
+                if (allBooks.Count > 0)
+                {
+                    bookRewriteAllowList = allBooks;
+                    bookRewriteAllowListInitialized = true;
+                }
+            }
+
+            if (!artRewriteAllowListInitialized)
+            {
+                var allArt = ArtDefFilterPolicy.GetAllEligibleDefNames();
+                if (allArt.Count > 0)
+                {
+                    artRewriteAllowList = allArt;
+                    artRewriteAllowListInitialized = true;
                 }
             }
         }

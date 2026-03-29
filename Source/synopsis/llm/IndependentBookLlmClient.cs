@@ -19,8 +19,8 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 {
     public static class IndependentBookLlmClient
     {
-        private const int TimeoutMs = 120000;
-        private const int MinOutputTokens = 512;
+        private const int TimeoutMs = 240000;
+        private const int MinOutputTokens = 256;
         private const int MaxOutputTokensCap = 2048;
         private const int OutputTokenOverhead = 120;
         private const string Player2GameClientId = "019a8368-b00b-72bc-b367-2825079dc6fb";

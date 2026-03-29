@@ -31,8 +31,7 @@ namespace RimTalk_LiteratureExpansion.events
         {
             ProcessPendingActions();
 
-            var settings = LiteratureMod.Settings;
-            if (settings != null && !settings.enabled) return;
+            if (!AreEasterLettersEnabled()) return;
 
             if (Find.TickManager == null) return;
             int tick = Find.TickManager.TicksGame;
@@ -83,8 +82,15 @@ namespace RimTalk_LiteratureExpansion.events
                 PendingActions.Enqueue(action);
         }
 
+        private static bool AreEasterLettersEnabled()
+        {
+            var settings = LiteratureMod.Settings;
+            return settings != null && settings.enabled && settings.allowEasterLetters;
+        }
+
         private static void TryScheduleAllyDiplomacy(LiteratueSaveData data, int tick)
         {
+            if (!AreEasterLettersEnabled()) return;
             if (_diplomacyPending) return;
             if (data.NextAllyDiplomacyTick <= 0)
                 data.NextAllyDiplomacyTick = tick + Rand.RangeInclusive(GenDate.TicksPerQuadrum, GenDate.TicksPerYear);
@@ -124,6 +130,7 @@ namespace RimTalk_LiteratureExpansion.events
         private static void ApplyAllyDiplomacyResult(AllyDiplomacyLetterSpec spec, Faction faction, Map map)
         {
             _diplomacyPending = false;
+            if (!AreEasterLettersEnabled()) return;
 
             var data = LiteratueSaveData.Current;
             if (data == null || Find.TickManager == null) return;
@@ -158,6 +165,7 @@ namespace RimTalk_LiteratureExpansion.events
 
         private static void TryScheduleFamilyLetter(LiteratueSaveData data, int tick)
         {
+            if (!AreEasterLettersEnabled()) return;
             if (_familyPending)
             {
                 Log.Message("[RimTalk LE] [Letter] Family letter pending; skip schedule.");
@@ -211,6 +219,7 @@ namespace RimTalk_LiteratureExpansion.events
         private static void ApplyFamilyLetterResult(FamilyLetterSpec spec, Pawn colonist, Pawn relative, Map map, string giftDefName)
         {
             _familyPending = false;
+            if (!AreEasterLettersEnabled()) return;
 
             var data = LiteratueSaveData.Current;
             if (data == null || Find.TickManager == null) return;

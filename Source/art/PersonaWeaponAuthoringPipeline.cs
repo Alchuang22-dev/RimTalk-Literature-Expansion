@@ -31,6 +31,12 @@ namespace RimTalk_LiteratureExpansion.art
                 onComplete?.Invoke();
                 return;
             }
+            if (!ArtDefFilterPolicy.IsAllowed(weapon))
+            {
+                Log.Message($"[RimTalk LE] Persona weapon update skipped: filtered out by settings ({weapon.def?.defName ?? "unknown"}).");
+                onComplete?.Invoke();
+                return;
+            }
 
             var cache = LiteratueSaveData.Current?.ArtCache;
             if (cache == null)

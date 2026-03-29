@@ -30,6 +30,7 @@ namespace RimTalk_LiteratureExpansion.synopsis
             if (!PendingBookQueue.TryDequeue(out var record)) return;
             if (record == null || record.Meta == null) return;
             if (record.Meta.Thing == null || record.Meta.Thing.DestroyedOrNull()) return;
+            if (!BookFilterPolicy.IsAllowed(record.Meta)) return;
 
             Log.Message($"[RimTalk LE] Processing book {record.Meta.Title} ({record.Meta.DefName}) [{record.Meta.Type}].");
 

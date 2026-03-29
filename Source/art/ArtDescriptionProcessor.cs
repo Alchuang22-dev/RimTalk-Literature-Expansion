@@ -38,6 +38,11 @@ namespace RimTalk_LiteratureExpansion.art
                 Log.Message($"[RimTalk LE] Art record thing invalid; skip {record.Meta.DefName ?? "unknown"}.");
                 return;
             }
+            if (!ArtDefFilterPolicy.IsAllowed(record.Meta.Thing))
+            {
+                Log.Message($"[RimTalk LE] Art record filtered out by settings; skip {record.Meta.DefName ?? "unknown"}.");
+                return;
+            }
 
             Log.Message($"[RimTalk LE] Processing art {record.Meta.ThingLabel} ({record.Meta.DefName}).");
 
