@@ -126,6 +126,13 @@ namespace RimTalk_LiteratureExpansion.settings
             listing.CheckboxLabeled("RimTalkLE_Settings_AllowEasterLetters".Translate(), ref settings.allowEasterLetters);
             listing.Gap(12f);
 
+            listing.Label("RimTalkLE_Settings_ManualEdits".Translate());
+            listing.Gap(4f);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowManualBookEdits".Translate(), ref settings.allowManualBookEdits);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowManualArtEdits".Translate(), ref settings.allowManualArtEdits);
+            listing.Label("RimTalkLE_Settings_ManualEditNote".Translate());
+            listing.Gap(12f);
+
             if (!settings.useRimTalkApi)
             {
                 listing.Label("RimTalkLE_Settings_StandaloneApi".Translate());

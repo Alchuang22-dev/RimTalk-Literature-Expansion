@@ -92,7 +92,13 @@ namespace RimTalk_LiteratureExpansion.art
                     var description = await ArtDescriptionService.GetOrGenerateAsync(record.Meta, contextPawn);
                     if (description != null)
                     {
-                        cache.Set(record.Key, new ArtDescriptionRecord(description));
+                        if (cache.TryGet(record.Key, out var existing) && existing != null && existing.IsManualOverride)
+                        {
+                            Log.Message($"[RimTalk LE] Preserved manual art override for {record.Meta.DefName}.");
+                            return;
+                        }
+
+                        cache.Set(record.Key, ArtDescriptionRecord.FromGenerated(description, existing));
                         Log.Message($"[RimTalk LE] Saved art description for {record.Meta.DefName}.");
                         return;
                     }

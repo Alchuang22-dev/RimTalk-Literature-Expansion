@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimTalkLE_Settings_ManualEdits>Manual text editing</RimTalkLE_Settings_ManualEdits>
+  <RimTalkLE_Settings_AllowManualBookEdits>Enable manual book editing gizmo</RimTalkLE_Settings_AllowManualBookEdits>
+  <RimTalkLE_Settings_AllowManualArtEdits>Enable manual art editing gizmo</RimTalkLE_Settings_AllowManualArtEdits>
+  <RimTalkLE_Settings_ManualEditNote>Manual editing currently covers books and art. The same record framework can be extended to work, Hediff, Thought, and other game text later.</RimTalkLE_Settings_ManualEditNote>
+  <RimTalkLE_ManualEditor_OpenLabel>Edit text</RimTalkLE_ManualEditor_OpenLabel>
+  <RimTalkLE_ManualEditor_OpenDesc>Open a manual editor for this book or artwork and store the changes in the mod cache.</RimTalkLE_ManualEditor_OpenDesc>
+  <RimTalkLE_ManualEditor_TargetUnavailable>This target is no longer available for manual editing.</RimTalkLE_ManualEditor_TargetUnavailable>
+  <RimTalkLE_ManualEditor_Title>Manual {0} editor</RimTalkLE_ManualEditor_Title>
+  <RimTalkLE_ManualEditor_KindBook>book</RimTalkLE_ManualEditor_KindBook>
+  <RimTalkLE_ManualEditor_KindArt>art</RimTalkLE_ManualEditor_KindArt>
+  <RimTalkLE_ManualEditor_Target>Target: {0}</RimTalkLE_ManualEditor_Target>
+  <RimTalkLE_ManualEditor_DefName>Def: {0}</RimTalkLE_ManualEditor_DefName>
+  <RimTalkLE_ManualEditor_FutureNote>Changes are recorded to the save cache. This framework is intended to be reused for more text types later.</RimTalkLE_ManualEditor_FutureNote>
+  <RimTalkLE_ManualEditor_FieldTitle>Title</RimTalkLE_ManualEditor_FieldTitle>
+  <RimTalkLE_ManualEditor_FieldBody>Body text</RimTalkLE_ManualEditor_FieldBody>
+  <RimTalkLE_ManualEditor_History>History</RimTalkLE_ManualEditor_History>
+  <RimTalkLE_ManualEditor_HistoryEmpty>No recorded revisions yet.</RimTalkLE_ManualEditor_HistoryEmpty>
+  <RimTalkLE_ManualEditor_HistoryLine>[{0}] Tick {1} | {2}
+{3}</RimTalkLE_ManualEditor_HistoryLine>
+  <RimTalkLE_ManualEditor_SourceGenerated>Generated</RimTalkLE_ManualEditor_SourceGenerated>
+  <RimTalkLE_ManualEditor_SourceManual>Manual</RimTalkLE_ManualEditor_SourceManual>
+  <RimTalkLE_ManualEditor_EmptyValue>(empty)</RimTalkLE_ManualEditor_EmptyValue>
+  <RimTalkLE_ManualEditor_Restore>Restore automatic</RimTalkLE_ManualEditor_Restore>
+  <RimTalkLE_ManualEditor_Save>Save override</RimTalkLE_ManualEditor_Save>
+  <RimTalkLE_ManualEditor_SaveSuccess>Manual text override saved.</RimTalkLE_ManualEditor_SaveSuccess>
+  <RimTalkLE_ManualEditor_SaveFailed>Failed to save manual text override.</RimTalkLE_ManualEditor_SaveFailed>
+  <RimTalkLE_ManualEditor_RestoreSuccess>Restored the last automatic version.</RimTalkLE_ManualEditor_RestoreSuccess>
+  <RimTalkLE_ManualEditor_RestoreFailed>No automatic version is available to restore.</RimTalkLE_ManualEditor_RestoreFailed>
+</LanguageData>

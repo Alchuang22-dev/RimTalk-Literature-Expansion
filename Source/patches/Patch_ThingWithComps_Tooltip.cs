@@ -4,6 +4,7 @@
  */
 using System.Text;
 using HarmonyLib;
+using RimTalk_LiteratureExpansion.integration;
 using RimWorld;
 using Verse;
 
@@ -15,8 +16,9 @@ namespace RimTalk_LiteratureExpansion.patches
         public static void Postfix(ThingWithComps __instance, ref TipSignal __result)
         {
             if (__instance == null) return;
-            var description = __instance.DescriptionFlavor;
-            if (description.NullOrEmpty()) return;
+            if (!ArtCacheUtil.AllowsDescriptionEdit(__instance)) return;
+            if (!ArtCacheUtil.TryGetRecord(__instance, out var record)) return;
+            if (!ArtCacheUtil.TryBuildDescription(record, string.Empty, out var description)) return;
 
             var sb = new StringBuilder();
             sb.Append(__instance.LabelNoParenthesisCap.AsTipTitle());

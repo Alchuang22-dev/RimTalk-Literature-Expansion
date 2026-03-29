@@ -82,7 +82,13 @@ namespace RimTalk_LiteratureExpansion.art
                         return;
                     }
 
-                    cache.Set(key, new ArtDescriptionRecord(description));
+                    if (cache.TryGet(key, out var existing) && existing != null && existing.IsManualOverride)
+                    {
+                        Log.Message($"[RimTalk LE] Persona weapon manual override preserved ({meta.DefName}).");
+                        return;
+                    }
+
+                    cache.Set(key, ArtDescriptionRecord.FromGenerated(description, existing));
                     Log.Message($"[RimTalk LE] Persona weapon updated: {meta.DefName}.");
                 }
                 catch (Exception ex)

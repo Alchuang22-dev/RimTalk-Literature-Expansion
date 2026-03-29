@@ -1,0 +1,292 @@
+using System.Collections.Generic;
+using HarmonyLib;
+using RimTalk_LiteratureExpansion.art;
+using RimTalk_LiteratureExpansion.art.model;
+using RimTalk_LiteratureExpansion.book;
+using RimTalk_LiteratureExpansion.integration;
+using RimTalk_LiteratureExpansion.scanner.queue;
+using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.storage;
+using RimTalk_LiteratureExpansion.storage.save;
+using RimTalk_LiteratureExpansion.synopsis.model;
+using RimWorld;
+using UnityEngine;
+using Verse;
+
+namespace RimTalk_LiteratureExpansion.manual
+{
+    public enum ManualTextEditKind
+    {
+        None = 0,
+        Book = 1,
+        Art = 2
+    }
+
+    public sealed class ManualTextEditContext
+    {
+        public Thing Thing;
+        public ManualTextEditKind Kind;
+        public string TargetLabel;
+        public string TargetDefName;
+        public string Title;
+        public string Body;
+        public List<TextHistoryEntry> History = new List<TextHistoryEntry>();
+        public bool CanRestoreAutomatic;
+
+        public string KindLabelKey =>
+            Kind == ManualTextEditKind.Book
+                ? "RimTalkLE_ManualEditor_KindBook"
+                : "RimTalkLE_ManualEditor_KindArt";
+    }
+
+    public static class ManualTextEditService
+    {
+        public static Gizmo CreateGizmo(ThingWithComps thing)
+        {
+            if (thing == null) return null;
+            if (!TryCreateContext(thing, out _)) return null;
+
+            return new Command_Action
+            {
+                defaultLabel = "RimTalkLE_ManualEditor_OpenLabel".Translate(),
+                defaultDesc = "RimTalkLE_ManualEditor_OpenDesc".Translate(),
+                icon = TexButton.Rename,
+                action = () => OpenEditor(thing)
+            };
+        }
+
+        public static void OpenEditor(Thing thing)
+        {
+            if (!TryCreateContext(thing, out var context))
+            {
+                Messages.Message("RimTalkLE_ManualEditor_TargetUnavailable".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            Find.WindowStack.Add(new Dialog_ManualTextEditor(context));
+        }
+
+        public static bool Save(ManualTextEditContext context, string title, string body)
+        {
+            if (context?.Thing == null || context.Thing.DestroyedOrNull()) return false;
+
+            title = Clean(title);
+            body = Clean(body);
+
+            return context.Kind switch
+            {
+                ManualTextEditKind.Book => SaveBook(context.Thing, title, body),
+                ManualTextEditKind.Art => SaveArt(context.Thing, title, body),
+                _ => false
+            };
+        }
+
+        public static bool RestoreAutomatic(ManualTextEditContext context)
+        {
+            if (context?.Thing == null || context.Thing.DestroyedOrNull()) return false;
+
+            return context.Kind switch
+            {
+                ManualTextEditKind.Book => RestoreBook(context.Thing),
+                ManualTextEditKind.Art => RestoreArt(context.Thing),
+                _ => false
+            };
+        }
+
+        public static bool TryCreateContext(Thing thing, out ManualTextEditContext context)
+        {
+            context = null;
+            if (thing == null || thing.DestroyedOrNull()) return false;
+
+            if (TryCreateBookContext(thing, out context))
+                return true;
+
+            if (TryCreateArtContext(thing, out context))
+                return true;
+
+            return false;
+        }
+
+        private static bool TryCreateBookContext(Thing thing, out ManualTextEditContext context)
+        {
+            context = null;
+            var settings = LiteratureMod.Settings;
+            if (settings == null || !settings.allowManualBookEdits) return false;
+            if (!BookFilterPolicy.IsAllowed(thing)) return false;
+
+            var meta = BookClassifier.Classify(thing);
+            if (meta == null) return false;
+
+            BookSynopsisRecord record = null;
+            var cache = LiteratueSaveData.Current?.SynopsisCache;
+            if (cache != null && BookKeyProvider.TryGetKey(thing, out var key))
+                cache.TryGet(key, out record);
+
+            string title = record?.Title;
+            if (string.IsNullOrWhiteSpace(title))
+                title = meta.Title ?? thing.LabelNoCount;
+
+            string body = record?.Synopsis;
+            if (string.IsNullOrWhiteSpace(body))
+                body = meta.DescriptionDetailed ?? thing.DescriptionDetailed ?? string.Empty;
+
+            context = new ManualTextEditContext
+            {
+                Thing = thing,
+                Kind = ManualTextEditKind.Book,
+                TargetLabel = meta.Title ?? thing.LabelCap,
+                TargetDefName = thing.def?.defName ?? string.Empty,
+                Title = title ?? string.Empty,
+                Body = body ?? string.Empty,
+                History = record?.History != null ? new List<TextHistoryEntry>(record.History) : new List<TextHistoryEntry>(),
+                CanRestoreAutomatic = record != null && record.TryCreateAutomaticFallback(out _, out _)
+            };
+            return true;
+        }
+
+        private static bool TryCreateArtContext(Thing thing, out ManualTextEditContext context)
+        {
+            context = null;
+            var settings = LiteratureMod.Settings;
+            if (settings == null || !settings.allowManualArtEdits) return false;
+            if (!settings.allowArtLabelEdits) return false;
+            if (!ArtDefFilterPolicy.IsAllowed(thing)) return false;
+            if (ArtEditPolicy.GetTargets(thing) == ArtEditTarget.None) return false;
+
+            var meta = new ArtMeta(thing);
+            if (meta == null) return false;
+
+            ArtDescriptionRecord record = null;
+            var cache = LiteratueSaveData.Current?.ArtCache;
+            if (cache != null && ArtKeyProvider.TryGetKey(thing, out var key))
+                cache.TryGet(key, out record);
+
+            string title = record?.Title;
+            if (string.IsNullOrWhiteSpace(title))
+                title = meta.CompArt?.Title ?? meta.OriginalTitle ?? thing.LabelNoCount;
+
+            string body = record?.Text;
+            if (string.IsNullOrWhiteSpace(body))
+                body = ResolveCurrentArtBody(thing, meta);
+
+            context = new ManualTextEditContext
+            {
+                Thing = thing,
+                Kind = ManualTextEditKind.Art,
+                TargetLabel = meta.ThingLabel ?? thing.LabelCap,
+                TargetDefName = thing.def?.defName ?? string.Empty,
+                Title = title ?? string.Empty,
+                Body = body ?? string.Empty,
+                History = record?.History != null ? new List<TextHistoryEntry>(record.History) : new List<TextHistoryEntry>(),
+                CanRestoreAutomatic = record != null && record.TryCreateAutomaticFallback(out _)
+            };
+            return true;
+        }
+
+        private static bool SaveBook(Thing thing, string title, string body)
+        {
+            var meta = BookClassifier.Classify(thing);
+            if (meta == null) return false;
+
+            if (!BookKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.SynopsisCache;
+            if (cache == null) return false;
+
+            cache.TryGet(key, out var existing);
+
+            if (string.IsNullOrWhiteSpace(title))
+                title = meta.Title ?? thing.LabelNoCount;
+
+            var record = BookSynopsisRecord.FromManual(title, body, meta.Type, existing);
+            cache.Set(key, record);
+            BookTextApplier.Apply(meta, record.ToSynopsis());
+            return true;
+        }
+
+        private static bool SaveArt(Thing thing, string title, string body)
+        {
+            if (!ArtKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.ArtCache;
+            if (cache == null) return false;
+
+            cache.TryGet(key, out var existing);
+
+            if (string.IsNullOrWhiteSpace(title))
+                title = thing.LabelNoCount;
+
+            cache.Set(key, ArtDescriptionRecord.FromManual(title, body, existing));
+            return true;
+        }
+
+        private static bool RestoreBook(Thing thing)
+        {
+            if (!BookKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.SynopsisCache;
+            if (cache == null) return false;
+            if (!cache.TryGet(key, out var record) || record == null)
+                return false;
+
+            var meta = BookClassifier.Classify(thing);
+            if (meta == null)
+                return false;
+
+            if (!record.TryCreateAutomaticFallback(out var synopsis, out var type))
+                return false;
+
+            var restored = BookSynopsisRecord.FromGenerated(synopsis, type, record);
+            cache.Set(key, restored);
+            BookTextApplier.Apply(meta, restored.ToSynopsis());
+            return true;
+        }
+
+        private static bool RestoreArt(Thing thing)
+        {
+            if (!ArtKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.ArtCache;
+            if (cache == null) return false;
+            if (!cache.TryGet(key, out var record) || record == null)
+                return false;
+
+            if (!record.TryCreateAutomaticFallback(out var description))
+                return false;
+
+            cache.Set(key, ArtDescriptionRecord.FromGenerated(description, record));
+
+            var meta = new ArtMeta(thing);
+            if (meta != null && PendingArtQueue.Contains(key))
+                return true;
+
+            return true;
+        }
+
+        private static string ResolveCurrentArtBody(Thing thing, ArtMeta meta)
+        {
+            var compArt = meta?.CompArt ?? thing?.TryGetComp<CompArt>();
+            if (compArt != null)
+            {
+                try
+                {
+                    return compArt.GenerateImageDescription().Resolve().Trim();
+                }
+                catch
+                {
+                }
+            }
+
+            return Clean(thing?.DescriptionFlavor);
+        }
+
+        private static string Clean(string value)
+        {
+            return value?.Trim() ?? string.Empty;
+        }
+    }
+}

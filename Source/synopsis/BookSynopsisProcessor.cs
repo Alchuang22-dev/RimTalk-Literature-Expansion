@@ -95,7 +95,14 @@ namespace RimTalk_LiteratureExpansion.synopsis
 
                     if (synopsis != null)
                     {
-                        cache.Set(record.Key, new BookSynopsisRecord(synopsis, record.Meta.Type));
+                        if (cache.TryGet(record.Key, out var existing) && existing != null && existing.IsManualOverride)
+                        {
+                            BookTextApplier.Apply(record.Meta, existing.ToSynopsis());
+                            Log.Message($"[RimTalk LE] Preserved manual book override for {record.Meta.DefName}.");
+                            return;
+                        }
+
+                        cache.Set(record.Key, BookSynopsisRecord.FromGenerated(synopsis, record.Meta.Type, existing));
                         BookTextApplier.Apply(record.Meta, synopsis);
                         //Log.Message($"[RimTalk LE] Saved synopsis for {record.Meta.DefName}.");
                         return;

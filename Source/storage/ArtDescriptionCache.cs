@@ -31,6 +31,12 @@ namespace RimTalk_LiteratureExpansion.storage
             _records[key.Id] = record;
         }
 
+        public bool Remove(ArtKey key)
+        {
+            if (key == null || !key.IsValid) return false;
+            return _records.Remove(key.Id);
+        }
+
         public int Clear()
         {
             int count = _records?.Count ?? 0;

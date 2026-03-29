@@ -45,6 +45,8 @@ namespace RimTalk_LiteratureExpansion.settings
         public List<string> questRewriteAllowList = new List<string>();
         public bool allowIdeoDescriptionRewrite = false;
         public bool allowLetterTextRewrite = false;
+        public bool allowManualBookEdits = true;
+        public bool allowManualArtEdits = true;
         public List<string> letterRewriteAllowList = new List<string>();
         public bool allowEasterLetters = true;
         public string promptSynopsis = string.Empty;
@@ -77,6 +79,8 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Collections.Look(ref questRewriteAllowList, "questRewriteAllowList", LookMode.Value);
             Scribe_Values.Look(ref allowIdeoDescriptionRewrite, "allowIdeoDescriptionRewrite", false);
             Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
+            Scribe_Values.Look(ref allowManualBookEdits, "allowManualBookEdits", true);
+            Scribe_Values.Look(ref allowManualArtEdits, "allowManualArtEdits", true);
             Scribe_Collections.Look(ref letterRewriteAllowList, "letterRewriteAllowList", LookMode.Value);
             Scribe_Values.Look(ref allowEasterLetters, "allowEasterLetters", true);
             Scribe_Values.Look(ref promptSynopsis, "promptSynopsis", string.Empty);

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <RimTalkLE_Settings_ManualEdits>手动文本编辑</RimTalkLE_Settings_ManualEdits>
+  <RimTalkLE_Settings_AllowManualBookEdits>启用书籍手动编辑按钮</RimTalkLE_Settings_AllowManualBookEdits>
+  <RimTalkLE_Settings_AllowManualArtEdits>启用艺术品手动编辑按钮</RimTalkLE_Settings_AllowManualArtEdits>
+  <RimTalkLE_Settings_ManualEditNote>当前手动编辑先覆盖书籍与艺术品；同一套记录框架后续可扩展到工作文本、Hediff 文本、Thought 文本等其他游戏文本。</RimTalkLE_Settings_ManualEditNote>
+  <RimTalkLE_ManualEditor_OpenLabel>编辑文本</RimTalkLE_ManualEditor_OpenLabel>
+  <RimTalkLE_ManualEditor_OpenDesc>为当前书籍或艺术品打开手动编辑窗口，并将修改记录到模组缓存中。</RimTalkLE_ManualEditor_OpenDesc>
+  <RimTalkLE_ManualEditor_TargetUnavailable>当前目标已无法进行手动编辑。</RimTalkLE_ManualEditor_TargetUnavailable>
+  <RimTalkLE_ManualEditor_Title>手动{0}编辑器</RimTalkLE_ManualEditor_Title>
+  <RimTalkLE_ManualEditor_KindBook>书籍</RimTalkLE_ManualEditor_KindBook>
+  <RimTalkLE_ManualEditor_KindArt>艺术品</RimTalkLE_ManualEditor_KindArt>
+  <RimTalkLE_ManualEditor_Target>目标：{0}</RimTalkLE_ManualEditor_Target>
+  <RimTalkLE_ManualEditor_DefName>Def：{0}</RimTalkLE_ManualEditor_DefName>
+  <RimTalkLE_ManualEditor_FutureNote>修改会写入当前存档缓存；这套框架后续可以继续复用到更多文本类型。</RimTalkLE_ManualEditor_FutureNote>
+  <RimTalkLE_ManualEditor_FieldTitle>标题</RimTalkLE_ManualEditor_FieldTitle>
+  <RimTalkLE_ManualEditor_FieldBody>正文</RimTalkLE_ManualEditor_FieldBody>
+  <RimTalkLE_ManualEditor_History>历史记录</RimTalkLE_ManualEditor_History>
+  <RimTalkLE_ManualEditor_HistoryEmpty>暂无记录。</RimTalkLE_ManualEditor_HistoryEmpty>
+  <RimTalkLE_ManualEditor_HistoryLine>[{0}] Tick {1} | {2}
+{3}</RimTalkLE_ManualEditor_HistoryLine>
+  <RimTalkLE_ManualEditor_SourceGenerated>自动生成</RimTalkLE_ManualEditor_SourceGenerated>
+  <RimTalkLE_ManualEditor_SourceManual>手动编辑</RimTalkLE_ManualEditor_SourceManual>
+  <RimTalkLE_ManualEditor_EmptyValue>（空）</RimTalkLE_ManualEditor_EmptyValue>
+  <RimTalkLE_ManualEditor_Restore>恢复自动版本</RimTalkLE_ManualEditor_Restore>
+  <RimTalkLE_ManualEditor_Save>保存覆盖</RimTalkLE_ManualEditor_Save>
+  <RimTalkLE_ManualEditor_SaveSuccess>已保存手动文本覆盖。</RimTalkLE_ManualEditor_SaveSuccess>
+  <RimTalkLE_ManualEditor_SaveFailed>保存手动文本覆盖失败。</RimTalkLE_ManualEditor_SaveFailed>
+  <RimTalkLE_ManualEditor_RestoreSuccess>已恢复最近一次自动版本。</RimTalkLE_ManualEditor_RestoreSuccess>
+  <RimTalkLE_ManualEditor_RestoreFailed>没有可恢复的自动版本。</RimTalkLE_ManualEditor_RestoreFailed>
+</LanguageData>
