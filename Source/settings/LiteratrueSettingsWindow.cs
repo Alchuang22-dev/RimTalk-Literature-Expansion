@@ -223,7 +223,7 @@ namespace RimTalk_LiteratureExpansion.settings
                         var map = maps[i];
                         RimTalk_LiteratureExpansion.scanner.MapArtScanner.Scan(map);
                         if (bookEnabled)
-                            RimTalk_LiteratureExpansion.scanner.MapBookScanner.Scan(map);
+                            RimTalk_LiteratureExpansion.scanner.MapBookScanner.Scan(map, detailedLog: true);
                         else
                             Log.Message($"[RimTalk LE] Book scan skipped: books disabled (map {map?.uniqueID ?? -1}).");
                     }

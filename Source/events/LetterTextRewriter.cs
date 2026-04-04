@@ -118,12 +118,13 @@ namespace RimTalk_LiteratureExpansion.events
             var request = BuildRequest(record);
             if (request == null)
             {
+                Log.Warning($"{LogPrefix} Failed to build request: {DescribeRecord(record)}");
                 Pending.Remove(record.LetterId);
                 return;
             }
 
             record.Requested = true;
-            Log.Message($"{LogPrefix} Dispatching independent LLM request (id={record.LetterId}).");
+            Log.Message($"{LogPrefix} Dispatching independent LLM request: {DescribeRecord(record)}");
 
             var task = IndependentBookLlmClient.QueryJsonAsync<LetterFlavorSpec>(request);
             task.ContinueWith(t =>
@@ -429,6 +430,58 @@ Constraints:
             if (action == null) return;
             lock (QueueLock)
                 PendingActions.Enqueue(action);
+        }
+
+        private static string DescribeRecord(PendingLetterRewrite record)
+        {
+            if (record == null)
+                return "record=null";
+
+            return $"id={record.LetterId}, type={record.Letter?.GetType().FullName ?? "null"}, def={record.Letter?.def?.defName ?? "null"}, label={SafePreview(record.LetterLabel, 80)}, faction={SafePreview(record.RelatedFaction, 60)}, initiator={record.Initiator?.LabelShortCap ?? "null"}, textLen={record.OriginalText?.Length ?? 0}, textPreview={SafePreview(record.OriginalText, 160)}";
+        }
+
+        private static string SafePreview(string value, int maxChars)
+        {
+            if (string.IsNullOrEmpty(value)) return "(empty)";
+
+            var sb = new StringBuilder();
+            int limit = Mathf.Max(0, maxChars);
+            for (int i = 0; i < value.Length && sb.Length < limit; i++)
+            {
+                char ch = value[i];
+                if (char.IsControl(ch))
+                {
+                    if (ch == '\r' || ch == '\n' || ch == '\t')
+                        sb.Append(' ');
+                    else
+                        sb.Append($"\\u{(int)ch:X4}");
+                    continue;
+                }
+
+                if (char.IsSurrogate(ch))
+                {
+                    if (char.IsHighSurrogate(ch) &&
+                        i + 1 < value.Length &&
+                        char.IsLowSurrogate(value[i + 1]))
+                    {
+                        sb.Append(ch);
+                        sb.Append(value[i + 1]);
+                        i++;
+                    }
+                    else
+                    {
+                        sb.Append($"\\u{(int)ch:X4}");
+                    }
+                    continue;
+                }
+
+                sb.Append(ch);
+            }
+
+            if (value.Length > maxChars)
+                sb.Append("...");
+
+            return sb.ToString();
         }
 
         private sealed class PendingLetterRewrite

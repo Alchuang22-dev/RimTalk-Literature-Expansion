@@ -412,54 +412,42 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
         private static async Task<string> PostJsonAsync(int requestId, string url, string json, string apiKey, AIProvider provider)
         {
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.Timeout = TimeoutMs;
-
-            if (provider != AIProvider.Google && !string.IsNullOrWhiteSpace(apiKey))
-                request.Headers["Authorization"] = $"Bearer {apiKey}";
-            if (provider == AIProvider.Player2)
-                request.Headers["X-Game-Client-Id"] = Player2GameClientId;
-
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(json ?? string.Empty);
-            request.ContentLength = bodyRaw.Length;
-
-            var sw = Stopwatch.StartNew();
-
+            byte[] bodyRaw;
             try
             {
-                using (var stream = await request.GetRequestStreamAsync())
-                {
-                    await stream.WriteAsync(bodyRaw, 0, bodyRaw.Length);
-                }
-
-                using (var response = (HttpWebResponse)await request.GetResponseAsync())
-                using (var streamReader = new StreamReader(response.GetResponseStream()))
-                {
-                    string text = await streamReader.ReadToEndAsync();
-                    Log.Message($"[RimTalk LE] [Req {requestId}] Response status: {(int)response.StatusCode} in {sw.ElapsedMilliseconds} ms.");
-                    return text;
-                }
+                bodyRaw = Encoding.UTF8.GetBytes(json ?? string.Empty);
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
-                string detail = ex.Message;
-                if (ex.Response is HttpWebResponse errorResponse)
-                {
-                    using (var reader = new StreamReader(errorResponse.GetResponseStream()))
-                    {
-                        string errorText = reader.ReadToEnd();
-                        detail = errorText.Length > 300 ? errorText.Substring(0, 300) : errorText;
-                        Log.Warning($"[RimTalk LE] [Req {requestId}] HTTP {(int)errorResponse.StatusCode}: {detail}");
-                    }
-                }
-                else
-                {
-                    Log.Warning($"[RimTalk LE] [Req {requestId}] WebException: {detail}");
-                }
+                Log.Warning($"[RimTalk LE] [Req {requestId}] Request payload encode failed: {ex.GetType().Name} - {ex.Message}");
                 throw;
             }
+
+            Log.Message($"[RimTalk LE] [Req {requestId}] HTTP request via UnityWebRequest: provider={provider}, url={SanitizeEndpoint(provider, url)}, bodyBytes={bodyRaw.Length}");
+
+            using var webRequest = new UnityWebRequest(url, "POST");
+            webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            webRequest.downloadHandler = new DownloadHandlerBuffer();
+            webRequest.SetRequestHeader("Content-Type", "application/json");
+            if (provider != AIProvider.Google && !string.IsNullOrWhiteSpace(apiKey))
+                webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+            if (provider == AIProvider.Player2)
+                webRequest.SetRequestHeader("X-Game-Client-Id", Player2GameClientId);
+            webRequest.timeout = Math.Max(5, TimeoutMs / 1000);
+
+            var sw = Stopwatch.StartNew();
+            await SendUnityWebRequestAsync(webRequest);
+
+            string responseText = webRequest.downloadHandler?.text;
+            if (webRequest.responseCode >= 400 || webRequest.isNetworkError || webRequest.isHttpError)
+            {
+                string detail = BuildSafePreview(responseText, 300);
+                Log.Warning($"[RimTalk LE] [Req {requestId}] HTTP {(int)webRequest.responseCode}: {webRequest.error ?? "(no error)"} body={detail}");
+                return null;
+            }
+
+            Log.Message($"[RimTalk LE] [Req {requestId}] Response status: {webRequest.responseCode} in {sw.ElapsedMilliseconds} ms.");
+            return responseText;
         }
 
         private static string ExtractContent(AIProvider provider, string responseText, int requestId)
@@ -510,6 +498,55 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             const int maxLen = 160;
             var trimmed = text.Trim();
             return trimmed.Length <= maxLen ? trimmed : trimmed.Substring(0, maxLen) + "...";
+        }
+
+        private static string BuildSafePreview(string value, int maxChars)
+        {
+            if (string.IsNullOrEmpty(value)) return "(empty)";
+
+            var sb = new StringBuilder();
+            int limit = Math.Max(0, maxChars);
+            for (int i = 0; i < value.Length && sb.Length < limit; i++)
+            {
+                char ch = value[i];
+
+                if (char.IsControl(ch))
+                {
+                    if (ch == '\r' || ch == '\n' || ch == '\t')
+                        sb.Append(' ');
+                    else
+                        sb.Append($"\\u{(int)ch:X4}");
+                    continue;
+                }
+
+                if (char.IsHighSurrogate(ch))
+                {
+                    if (i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                    {
+                        sb.Append(ch);
+                        sb.Append(value[i + 1]);
+                        i++;
+                    }
+                    else
+                    {
+                        sb.Append($"\\u{(int)ch:X4}");
+                    }
+                    continue;
+                }
+
+                if (char.IsLowSurrogate(ch))
+                {
+                    sb.Append($"\\u{(int)ch:X4}");
+                    continue;
+                }
+
+                sb.Append(ch);
+            }
+
+            if (value.Length > maxChars)
+                sb.Append("...");
+
+            return sb.ToString();
         }
 
         private static string SanitizeApiKey(string apiKey)
