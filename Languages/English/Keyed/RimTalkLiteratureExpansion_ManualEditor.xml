@@ -10,6 +10,7 @@
   <RimTalkLE_ManualEditor_Title>Manual {0} editor</RimTalkLE_ManualEditor_Title>
   <RimTalkLE_ManualEditor_KindBook>book</RimTalkLE_ManualEditor_KindBook>
   <RimTalkLE_ManualEditor_KindArt>art</RimTalkLE_ManualEditor_KindArt>
+  <RimTalkLE_ManualEditor_KindTv>TV program</RimTalkLE_ManualEditor_KindTv>
   <RimTalkLE_ManualEditor_Target>Target: {0}</RimTalkLE_ManualEditor_Target>
   <RimTalkLE_ManualEditor_DefName>Def: {0}</RimTalkLE_ManualEditor_DefName>
   <RimTalkLE_ManualEditor_FutureNote>Changes are recorded to the save cache. This framework is intended to be reused for more text types later.</RimTalkLE_ManualEditor_FutureNote>

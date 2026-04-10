@@ -14,6 +14,10 @@
   <RimTalkLE_Settings_Prompt_IdeoRewrite>文化改写提示词</RimTalkLE_Settings_Prompt_IdeoRewrite>
   <RimTalkLE_Settings_Prompt_QuestAdvert>广告任务提示词</RimTalkLE_Settings_Prompt_QuestAdvert>
   <RimTalkLE_Settings_Prompt_QuestWarning>警告任务提示词</RimTalkLE_Settings_Prompt_QuestWarning>
+  <RimTalkLE_Settings_Prompt_TvProgram>电视节目内容提示词</RimTalkLE_Settings_Prompt_TvProgram>
+  <RimTalkLE_Settings_TvContent>电视节目内容</RimTalkLE_Settings_TvContent>
+  <RimTalkLE_Settings_AllowTvContent>启用电视节目内容注入到 pawn 上下文中</RimTalkLE_Settings_AllowTvContent>
+  <RimTalkLE_Settings_AllowManualTvEdits>启用电视机手动编辑按钮</RimTalkLE_Settings_AllowManualTvEdits>
   <RimTalkLE_Settings_PageMain>常规</RimTalkLE_Settings_PageMain>
   <RimTalkLE_Settings_PageFilters>过滤器</RimTalkLE_Settings_PageFilters>
   <RimTalkLE_Settings_Category>RimTalk 文学扩展</RimTalkLE_Settings_Category>

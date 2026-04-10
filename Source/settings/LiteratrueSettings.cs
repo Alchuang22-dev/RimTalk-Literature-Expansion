@@ -47,6 +47,8 @@ namespace RimTalk_LiteratureExpansion.settings
         public bool allowLetterTextRewrite = false;
         public bool allowManualBookEdits = true;
         public bool allowManualArtEdits = true;
+        public bool allowTvContent = true;
+        public bool allowManualTvEdits = true;
         public List<string> letterRewriteAllowList = new List<string>();
         public bool allowEasterLetters = true;
         public string promptSynopsis = string.Empty;
@@ -59,6 +61,7 @@ namespace RimTalk_LiteratureExpansion.settings
         public string promptIdeoRewrite = string.Empty;
         public string promptQuestAdvert = string.Empty;
         public string promptQuestWarning = string.Empty;
+        public string promptTvProgram = string.Empty;
 
         public override void ExposeData()
         {
@@ -81,6 +84,8 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Values.Look(ref allowLetterTextRewrite, "allowLetterTextRewrite", false);
             Scribe_Values.Look(ref allowManualBookEdits, "allowManualBookEdits", true);
             Scribe_Values.Look(ref allowManualArtEdits, "allowManualArtEdits", true);
+            Scribe_Values.Look(ref allowTvContent, "allowTvContent", true);
+            Scribe_Values.Look(ref allowManualTvEdits, "allowManualTvEdits", true);
             Scribe_Collections.Look(ref letterRewriteAllowList, "letterRewriteAllowList", LookMode.Value);
             Scribe_Values.Look(ref allowEasterLetters, "allowEasterLetters", true);
             Scribe_Values.Look(ref promptSynopsis, "promptSynopsis", string.Empty);
@@ -93,6 +98,7 @@ namespace RimTalk_LiteratureExpansion.settings
             Scribe_Values.Look(ref promptIdeoRewrite, "promptIdeoRewrite", string.Empty);
             Scribe_Values.Look(ref promptQuestAdvert, "promptQuestAdvert", string.Empty);
             Scribe_Values.Look(ref promptQuestWarning, "promptQuestWarning", string.Empty);
+            Scribe_Values.Look(ref promptTvProgram, "promptTvProgram", string.Empty);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && api == null)
                 api = new LiteratureSettingsApi();

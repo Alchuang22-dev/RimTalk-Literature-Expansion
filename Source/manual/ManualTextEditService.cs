@@ -9,6 +9,7 @@ using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimTalk_LiteratureExpansion.synopsis.model;
+using RimTalk_LiteratureExpansion.tv;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -19,7 +20,8 @@ namespace RimTalk_LiteratureExpansion.manual
     {
         None = 0,
         Book = 1,
-        Art = 2
+        Art = 2,
+        Tv = 3
     }
 
     public sealed class ManualTextEditContext
@@ -36,7 +38,9 @@ namespace RimTalk_LiteratureExpansion.manual
         public string KindLabelKey =>
             Kind == ManualTextEditKind.Book
                 ? "RimTalkLE_ManualEditor_KindBook"
-                : "RimTalkLE_ManualEditor_KindArt";
+                : Kind == ManualTextEditKind.Tv
+                    ? "RimTalkLE_ManualEditor_KindTv"
+                    : "RimTalkLE_ManualEditor_KindArt";
     }
 
     public static class ManualTextEditService
@@ -77,6 +81,7 @@ namespace RimTalk_LiteratureExpansion.manual
             {
                 ManualTextEditKind.Book => SaveBook(context.Thing, title, body),
                 ManualTextEditKind.Art => SaveArt(context.Thing, title, body),
+                ManualTextEditKind.Tv => SaveTv(context.Thing, title, body),
                 _ => false
             };
         }
@@ -89,6 +94,7 @@ namespace RimTalk_LiteratureExpansion.manual
             {
                 ManualTextEditKind.Book => RestoreBook(context.Thing),
                 ManualTextEditKind.Art => RestoreArt(context.Thing),
+                ManualTextEditKind.Tv => RestoreTv(context.Thing),
                 _ => false
             };
         }
@@ -102,6 +108,9 @@ namespace RimTalk_LiteratureExpansion.manual
                 return true;
 
             if (TryCreateArtContext(thing, out context))
+                return true;
+
+            if (TryCreateTvContext(thing, out context))
                 return true;
 
             return false;
@@ -282,6 +291,73 @@ namespace RimTalk_LiteratureExpansion.manual
             }
 
             return Clean(thing?.DescriptionFlavor);
+        }
+
+        private static bool TryCreateTvContext(Thing thing, out ManualTextEditContext context)
+        {
+            context = null;
+            var settings = LiteratureMod.Settings;
+            if (settings == null || !settings.allowManualTvEdits) return false;
+            if (!settings.allowTvContent) return false;
+            if (!TvFilterPolicy.IsTelevision(thing)) return false;
+
+            TvProgramRecord record = null;
+            var cache = LiteratueSaveData.Current?.TvProgramCache;
+            if (cache != null && TvProgramKeyProvider.TryGetKey(thing, out var key))
+                cache.TryGet(key, out record);
+
+            string title = record?.Title;
+            if (string.IsNullOrWhiteSpace(title))
+                title = thing.LabelNoCount;
+
+            string body = record?.Content ?? string.Empty;
+
+            context = new ManualTextEditContext
+            {
+                Thing = thing,
+                Kind = ManualTextEditKind.Tv,
+                TargetLabel = thing.LabelCap,
+                TargetDefName = thing.def?.defName ?? string.Empty,
+                Title = title ?? string.Empty,
+                Body = body ?? string.Empty,
+                History = record?.History != null ? new List<TextHistoryEntry>(record.History) : new List<TextHistoryEntry>(),
+                CanRestoreAutomatic = record != null && record.TryCreateAutomaticFallback(out _)
+            };
+            return true;
+        }
+
+        private static bool SaveTv(Thing thing, string title, string body)
+        {
+            if (!TvProgramKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.TvProgramCache;
+            if (cache == null) return false;
+
+            cache.TryGet(key, out var existing);
+
+            if (string.IsNullOrWhiteSpace(title))
+                title = thing.LabelNoCount;
+
+            cache.Set(key, TvProgramRecord.FromManual(title, body, existing));
+            return true;
+        }
+
+        private static bool RestoreTv(Thing thing)
+        {
+            if (!TvProgramKeyProvider.TryGetKey(thing, out var key))
+                return false;
+
+            var cache = LiteratueSaveData.Current?.TvProgramCache;
+            if (cache == null) return false;
+            if (!cache.TryGet(key, out var record) || record == null)
+                return false;
+
+            if (!record.TryCreateAutomaticFallback(out var program))
+                return false;
+
+            cache.Set(key, TvProgramRecord.FromGenerated(program, record));
+            return true;
         }
 
         private static string Clean(string value)

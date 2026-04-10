@@ -18,6 +18,10 @@
   <RimTalkLE_Settings_Prompt_IdeoRewrite>Ideology rewrite prompt</RimTalkLE_Settings_Prompt_IdeoRewrite>
   <RimTalkLE_Settings_Prompt_QuestAdvert>Quest advert prompt</RimTalkLE_Settings_Prompt_QuestAdvert>
   <RimTalkLE_Settings_Prompt_QuestWarning>Quest warning prompt</RimTalkLE_Settings_Prompt_QuestWarning>
+  <RimTalkLE_Settings_Prompt_TvProgram>TV program content prompt</RimTalkLE_Settings_Prompt_TvProgram>
+  <RimTalkLE_Settings_TvContent>TV content</RimTalkLE_Settings_TvContent>
+  <RimTalkLE_Settings_AllowTvContent>Enable TV content injection into pawn context</RimTalkLE_Settings_AllowTvContent>
+  <RimTalkLE_Settings_AllowManualTvEdits>Enable manual TV content editing gizmo</RimTalkLE_Settings_AllowManualTvEdits>
   <RimTalkLE_Settings_AllowBooks>Allow book edits</RimTalkLE_Settings_AllowBooks>
   <RimTalkLE_Settings_AllowArt>Allow art edits</RimTalkLE_Settings_AllowArt>
   <RimTalkLE_Settings_AllowArtBuildings>Allow art edits: buildings</RimTalkLE_Settings_AllowArtBuildings>

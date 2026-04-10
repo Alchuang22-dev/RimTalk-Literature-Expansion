@@ -30,5 +30,8 @@ namespace RimTalk_LiteratureExpansion.settings
         public const float RowHeight = 24f;
         public const float FieldGap = 6f;
         public const float PromptTextHeight = 140f;
+
+        public const int TvTitleMaxChars = 80;
+        public const int TvContentMaxChars = 800;
     }
 }

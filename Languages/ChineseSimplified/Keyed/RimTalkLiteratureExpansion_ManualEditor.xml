@@ -10,6 +10,7 @@
   <RimTalkLE_ManualEditor_Title>手动{0}编辑器</RimTalkLE_ManualEditor_Title>
   <RimTalkLE_ManualEditor_KindBook>书籍</RimTalkLE_ManualEditor_KindBook>
   <RimTalkLE_ManualEditor_KindArt>艺术品</RimTalkLE_ManualEditor_KindArt>
+  <RimTalkLE_ManualEditor_KindTv>电视节目</RimTalkLE_ManualEditor_KindTv>
   <RimTalkLE_ManualEditor_Target>目标：{0}</RimTalkLE_ManualEditor_Target>
   <RimTalkLE_ManualEditor_DefName>Def：{0}</RimTalkLE_ManualEditor_DefName>
   <RimTalkLE_ManualEditor_FutureNote>修改会写入当前存档缓存；这套框架后续可以继续复用到更多文本类型。</RimTalkLE_ManualEditor_FutureNote>

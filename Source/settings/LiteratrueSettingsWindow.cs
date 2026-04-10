@@ -35,6 +35,7 @@ using RimTalk_LiteratureExpansion.journal.llm;
 using RimTalk_LiteratureExpansion.events;
 using RimTalk_LiteratureExpansion.events.quests;
 using RimTalk_LiteratureExpansion.storage.save;
+using RimTalk_LiteratureExpansion.tv;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -130,6 +131,11 @@ namespace RimTalk_LiteratureExpansion.settings
             listing.Gap(4f);
             listing.CheckboxLabeled("RimTalkLE_Settings_AllowManualBookEdits".Translate(), ref settings.allowManualBookEdits);
             listing.CheckboxLabeled("RimTalkLE_Settings_AllowManualArtEdits".Translate(), ref settings.allowManualArtEdits);
+            listing.Gap(6f);
+            listing.Label("RimTalkLE_Settings_TvContent".Translate());
+            listing.Gap(4f);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowTvContent".Translate(), ref settings.allowTvContent);
+            listing.CheckboxLabeled("RimTalkLE_Settings_AllowManualTvEdits".Translate(), ref settings.allowManualTvEdits);
             listing.Label("RimTalkLE_Settings_ManualEditNote".Translate());
             listing.Gap(12f);
 
@@ -283,6 +289,8 @@ namespace RimTalk_LiteratureExpansion.settings
                 ref settings.promptQuestAdvert, AdvertisementQuestRequest.BuildDefaultPrompt());
             DrawPromptField(listing, "RimTalkLE_Settings_Prompt_QuestWarning".Translate(),
                 ref settings.promptQuestWarning, WarningQuestRequest.BuildDefaultPrompt());
+            DrawPromptField(listing, "RimTalkLE_Settings_Prompt_TvProgram".Translate(),
+                ref settings.promptTvProgram, TvProgramPromptBuilder.BuildDefaultPrompt());
 
             listing.End();
             _settingsViewHeightPrompts = listing.CurHeight + 10f;
@@ -335,7 +343,7 @@ namespace RimTalk_LiteratureExpansion.settings
         {
             float header = Text.LineHeight * 2f + 8f;
             float row = LiteratureSettingsDef.RowHeight + LiteratureSettingsDef.PromptTextHeight + 8f;
-            const int fieldCount = 10;
+            const int fieldCount = 11;
             return header + fieldCount * row + 10f;
         }
 
