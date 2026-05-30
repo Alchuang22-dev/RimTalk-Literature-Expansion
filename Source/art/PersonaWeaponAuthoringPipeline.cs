@@ -4,6 +4,7 @@
  */
 using System;
 using System.Threading.Tasks;
+using RimTalk_LiteratureExpansion;
 using RimTalk_LiteratureExpansion.art.llm;
 using RimTalk_LiteratureExpansion.authoring.llm;
 using RimTalk_LiteratureExpansion.integration;
@@ -20,6 +21,13 @@ namespace RimTalk_LiteratureExpansion.art
         {
             if (weapon == null || pawn == null)
             {
+                onComplete?.Invoke();
+                return;
+            }
+
+            if (!PlayerFactionUtility.IsPlayerFactionPawn(pawn))
+            {
+                Log.Message("[RimTalk LE] Persona weapon update skipped: bonded pawn is not an initialized player-faction pawn.");
                 onComplete?.Invoke();
                 return;
             }

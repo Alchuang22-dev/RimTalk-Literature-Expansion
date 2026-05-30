@@ -43,8 +43,9 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         {
             if (pawn == null) return null;
 
-            // Guard against early initialization issues when faction system is not ready
-            if (Find.FactionManager == null || Faction.OfPlayer == null)
+            // Guard against early initialization issues without touching Faction.OfPlayer,
+            // which logs an error before the player faction exists.
+            if (!PlayerFactionUtility.TryGetPlayerFaction(out _))
             {
                 Log.Warning("[RimTalk LE] MemorySummaryRequest.BuildRequest skipped: Faction manager or player faction not initialized.");
                 return null;
@@ -119,4 +120,3 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         }
     }
 }
-

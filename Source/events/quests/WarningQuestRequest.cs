@@ -78,7 +78,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
         private static string BuildTemplate(int offerDays, int deliveryDays)
         {
             return
-$@"Write a hostile warning letter quest from the issuing faction.
+$@"Write a hostile warning quest description from the issuing faction's point of view.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
@@ -88,7 +88,8 @@ Required JSON fields:
 Constraints:
 - title <= {TitleMaxChars} chars.
 - description <= {BodyMaxChars} chars, about {TargetTokens} tokens.
-- Use the issuer's voice and keep it tense.
+- Use the issuer's voice and keep it tense; the description should read like a threat-backed task request, not generic flavor prose.
+- Include a short background or grievance explaining why the faction is demanding payment.
 - Include the demanded silver amount exactly as provided in QuestData.
 - Mention payment can be delivered by caravan or transport pods.
 - Mention the offer window ({offerDays} days) and delivery window ({deliveryDays} days) without changing numbers.

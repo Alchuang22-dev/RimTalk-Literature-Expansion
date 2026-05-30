@@ -80,7 +80,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
         private static string BuildTemplate(int offerDays, int deliveryDays)
         {
             return
-$@"Write a merchant advertisement quest from the issuing faction.
+$@"Write a merchant advertisement quest description from the issuing faction's point of view.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
@@ -90,7 +90,8 @@ Required JSON fields:
 Constraints:
 - title <= {TitleMaxChars} chars.
 - description <= {BodyMaxChars} chars, about {TargetTokens} tokens.
-- Use the issuer's voice and keep it grounded.
+- Use the issuer's voice and keep it grounded; the description should read like a posted task request, not generic flavor prose.
+- Include a short background reason for why the faction is making this offer.
 - Include all three options with their silver amounts and item names exactly as provided in QuestData.
 - Mention payment can be delivered by caravan or transport pods.
 - Mention the offer window ({offerDays} days) and delivery window ({deliveryDays} days) without changing numbers.

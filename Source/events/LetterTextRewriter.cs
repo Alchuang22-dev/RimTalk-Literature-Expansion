@@ -174,17 +174,21 @@ namespace RimTalk_LiteratureExpansion.events
         private static string BuildTemplate(int charLimit)
         {
             return
-$@"Write 3-5 sentences of in-universe flavor to append to a letter.
+$@"Write short arrival-notice text for a RimWorld letter.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""
 
 Constraints:
-- Use the letter's situation as context; avoid unrelated filler.
-- Do NOT include any names, factions, places, rewards, requirements, or time limits.
+- This is the text shown when the letter arrives, not the letter body itself.
+- Write like markings on an envelope, delivery slip, or brief clerk's note: for example ""To the colony"" plus a compact description of what the letter concerns.
+- Keep it concise: 1-3 short sentences or lines, not a full letter and not a narrative scene.
+- Use the original letter only to infer the arrival notice topic, urgency, and tone.
+- Do NOT rewrite, summarize, or continue the letter body.
+- Do NOT include names, factions, places, rewards, requirements, or time limits unless they are already in the original letter and necessary for the notice.
 - Do NOT include any numbers or percentages.
-- Keep it generic and evocative; add atmosphere without new facts.
+- Do not invent new facts; summarize the letter's purpose and tone.
 - Keep length <= {charLimit} characters (about {TargetTokens} tokens).
 - If unsure, return an empty string.
 - No markdown, no extra keys.";

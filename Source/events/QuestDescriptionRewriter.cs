@@ -197,19 +197,19 @@ namespace RimTalk_LiteratureExpansion.events
         {
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
             return
-$@"Generate flavorful quest lore and atmosphere text in the quest issuer's voice.
+$@"Write an addendum for a RimWorld quest description in the quest issuer's voice.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""
 
 Constraints:
-- Create only supplementary flavor text (backstory, atmosphere, personal anecdotes) that complements the original quest.
-- Focus on the issuer's perspective: their motivations, past experiences, emotions, or unique insights about this quest.
-- Add immersion through vivid descriptions of environment, mood, or cultural context.
-- Absolutely do NOT repeat or rephrase the original quest objectives or requirements.
-- Preserve all factual data from QuestData but assume the base description already covers the what and how.
-- Do not add new deadlines, rewards, counts, locations, or entity names.
+- The text must read like a quest description and background supplement from the issuer, not detached atmosphere prose.
+- Add why the issuer is asking, what led to the situation, and what the request means to them.
+- Keep the original quest objective, stakes, and tone clear, but do not duplicate the full original text.
+- Use only facts from QuestData and OriginalText; do not invent new rewards, deadlines, counts, locations, or named entities.
+- You may mention required tokens and numbers only when they already appear in QuestData.
+- Avoid generic scenery-only writing; every sentence should support the request, issuer motive, or quest background.
 - Minimum length: at least about 100 tokens.
 - Keep length <= {charLimit} characters (about {TargetTokens} tokens).
 - No markdown, no extra keys.";
