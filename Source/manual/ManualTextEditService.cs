@@ -48,7 +48,7 @@ namespace RimTalk_LiteratureExpansion.manual
         public static Gizmo CreateGizmo(ThingWithComps thing)
         {
             if (thing == null) return null;
-            if (!TryCreateContext(thing, out _)) return null;
+            if (!TryCreateContext(thing, out _, includeBody: false)) return null;
 
             return new Command_Action
             {
@@ -101,13 +101,18 @@ namespace RimTalk_LiteratureExpansion.manual
 
         public static bool TryCreateContext(Thing thing, out ManualTextEditContext context)
         {
+            return TryCreateContext(thing, out context, includeBody: true);
+        }
+
+        private static bool TryCreateContext(Thing thing, out ManualTextEditContext context, bool includeBody)
+        {
             context = null;
             if (thing == null || thing.DestroyedOrNull()) return false;
 
             if (TryCreateBookContext(thing, out context))
                 return true;
 
-            if (TryCreateArtContext(thing, out context))
+            if (TryCreateArtContext(thing, out context, includeBody))
                 return true;
 
             if (TryCreateTvContext(thing, out context))
@@ -153,7 +158,7 @@ namespace RimTalk_LiteratureExpansion.manual
             return true;
         }
 
-        private static bool TryCreateArtContext(Thing thing, out ManualTextEditContext context)
+        private static bool TryCreateArtContext(Thing thing, out ManualTextEditContext context, bool includeBody)
         {
             context = null;
             var settings = LiteratureMod.Settings;
@@ -175,7 +180,7 @@ namespace RimTalk_LiteratureExpansion.manual
                 title = meta.CompArt?.Title ?? meta.OriginalTitle ?? thing.LabelNoCount;
 
             string body = record?.Text;
-            if (string.IsNullOrWhiteSpace(body))
+            if (includeBody && string.IsNullOrWhiteSpace(body))
                 body = ResolveCurrentArtBody(thing, meta);
 
             context = new ManualTextEditContext
@@ -279,7 +284,7 @@ namespace RimTalk_LiteratureExpansion.manual
         private static string ResolveCurrentArtBody(Thing thing, ArtMeta meta)
         {
             var compArt = meta?.CompArt ?? thing?.TryGetComp<CompArt>();
-            if (compArt != null)
+            if (compArt != null && compArt.Active)
             {
                 try
                 {
