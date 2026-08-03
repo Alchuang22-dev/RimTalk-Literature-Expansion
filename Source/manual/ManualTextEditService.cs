@@ -177,7 +177,7 @@ namespace RimTalk_LiteratureExpansion.manual
 
             string title = record?.Title;
             if (string.IsNullOrWhiteSpace(title))
-                title = meta.CompArt?.Title ?? meta.OriginalTitle ?? thing.LabelNoCount;
+                title = meta.OriginalTitle ?? thing.LabelNoCount;
 
             string body = record?.Text;
             if (includeBody && string.IsNullOrWhiteSpace(body))

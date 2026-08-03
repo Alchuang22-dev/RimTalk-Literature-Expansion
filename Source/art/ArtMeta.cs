@@ -34,7 +34,9 @@ namespace RimTalk_LiteratureExpansion.art
             if (thing.TryGetQuality(out var quality))
                 Quality = quality;
 
-            OriginalTitle = CompArt?.Title ?? ThingLabel;
+            OriginalTitle = CompArt != null && CompArt.Active
+                ? CompArt.Title
+                : ThingLabel;
             AuthorName = CompArt?.AuthorName ?? string.Empty;
 
             if (CompArt != null && CompArt.Active)
