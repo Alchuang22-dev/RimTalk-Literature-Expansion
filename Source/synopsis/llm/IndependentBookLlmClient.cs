@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using RimTalk;
 using RimTalk.Data;
 using RimTalk.Util;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using UnityEngine.Networking;
 using Verse;
@@ -52,7 +53,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             @"""usageMetadata""\s*:\s*\{[^}]*?""promptTokenCount""\s*:\s*(\d+)[^}]*?""candidatesTokenCount""\s*:\s*(\d+)[^}]*?""totalTokenCount""\s*:\s*(\d+)",
             RegexOptions.Compiled | RegexOptions.Singleline);
 
-        public static async Task<T> QueryJsonAsync<T>(TalkRequest request) where T : class, IJsonData
+        public static async Task<T> QueryJsonAsync<T>(LiteratureLlmRequest request) where T : class, IJsonData
         {
             if (request == null) return null;
 
@@ -60,14 +61,14 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
             if (!TryGetActiveConfig(out var config))
             {
-                Log.Warning($"[RimTalk LE] [Req {requestId}] No active RimTalk API config for independent book request.");
+                Log.Warning($"[RimTalk LE] [Req {requestId}] No active RimTalk API config for independent literature request.");
                 return null;
             }
 
             string model = ResolveModel(config);
             if (string.IsNullOrWhiteSpace(model))
             {
-                Log.Warning($"[RimTalk LE] [Req {requestId}] Missing model for independent book request.");
+                Log.Warning($"[RimTalk LE] [Req {requestId}] Missing model for independent literature request.");
                 return null;
             }
 
@@ -90,7 +91,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 endpoint = $"{Player2LocalBaseUrl}/v1/chat/completions";
             if (string.IsNullOrWhiteSpace(endpoint))
             {
-                Log.Warning($"[RimTalk LE] [Req {requestId}] Missing endpoint for independent book request.");
+                Log.Warning($"[RimTalk LE] [Req {requestId}] Missing endpoint for independent literature request.");
                 return null;
             }
 
@@ -105,13 +106,13 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
                 int maxTokens = ResolveMaxOutputTokens();
                 Log.Message($"[RimTalk LE] [Req {requestId}] Request max tokens: {maxTokens}");
-                string json = BuildRequestJson(config.Provider, model, request.Context, request.Prompt, maxTokens);
+                string json = BuildRequestJson(config.Provider, model, request.Instruction, request.Context, maxTokens);
                 Log.Message($"[RimTalk LE] [Req {requestId}] Request payload length: {json?.Length ?? 0}");
 
                 string responseText = await PostJsonAsync(requestId, endpoint, json, apiKey, config.Provider);
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
-                    Log.Warning($"[RimTalk LE] [Req {requestId}] Empty response from independent book request.");
+                    Log.Warning($"[RimTalk LE] [Req {requestId}] Empty response from independent literature request.");
                     return null;
                 }
 
@@ -120,7 +121,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
                 string content = ExtractContent(config.Provider, responseText, requestId);
                 if (string.IsNullOrWhiteSpace(content))
                 {
-                    Log.Warning($"[RimTalk LE] [Req {requestId}] Failed to parse response content from independent book request.");
+                    Log.Warning($"[RimTalk LE] [Req {requestId}] Failed to parse response content from independent literature request.");
                     return null;
                 }
 
@@ -144,7 +145,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         }
             catch (Exception ex)
             {
-                Log.Warning($"[RimTalk LE] [Req {requestId}] Independent book request failed: {ex.GetType().Name} - {ex.Message}");
+                Log.Warning($"[RimTalk LE] [Req {requestId}] Independent literature request failed: {ex.GetType().Name} - {ex.Message}");
                 return null;
             }
         }
@@ -366,17 +367,39 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             return trimmed;
         }
 
-        private static string BuildRequestJson(AIProvider provider, string model, string context, string prompt, int maxTokens)
+        private static string BuildRequestJson(AIProvider provider, string model, string instruction, string context, int maxTokens)
         {
             if (provider == AIProvider.Google)
             {
-                var combined = string.IsNullOrWhiteSpace(context)
-                    ? prompt ?? string.Empty
-                    : $"{context}\n{prompt}";
+                bool isGemma = !string.IsNullOrWhiteSpace(model) &&
+                               model.IndexOf("gemma", StringComparison.OrdinalIgnoreCase) >= 0;
+                var userContent = context ?? string.Empty;
+                GeminiContent systemInstruction = null;
+                if (isGemma)
+                {
+                    userContent = string.IsNullOrWhiteSpace(context)
+                        ? instruction ?? string.Empty
+                        : $"{instruction}\n\n[Context]\n{context}";
+                }
+                else
+                {
+                    systemInstruction = new GeminiContent
+                    {
+                        Parts = new[] { new GeminiPart { Text = instruction ?? string.Empty } }
+                    };
+                }
 
                 var request = new GeminiRequest
                 {
-                    Contents = new[] { new GeminiContent { Parts = new[] { new GeminiPart { Text = combined } } } },
+                    SystemInstruction = systemInstruction,
+                    Contents = new[]
+                    {
+                        new GeminiContent
+                        {
+                            Role = "user",
+                            Parts = new[] { new GeminiPart { Text = userContent } }
+                        }
+                    },
                     GenerationConfig = new GeminiGenerationConfig
                     {
                         Temperature = 0.7f,
@@ -389,8 +412,8 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
             var messages = new[]
             {
-                new OpenAIMessage { Role = "system", Content = context ?? string.Empty },
-                new OpenAIMessage { Role = "user", Content = prompt ?? string.Empty }
+                new OpenAIMessage { Role = "system", Content = instruction ?? string.Empty },
+                new OpenAIMessage { Role = "user", Content = context ?? string.Empty }
             };
 
             var openAiRequest = new OpenAIRequest
@@ -669,6 +692,8 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         [DataContract]
         private sealed class GeminiRequest
         {
+            [DataMember(Name = "system_instruction", EmitDefaultValue = false)]
+            public GeminiContent SystemInstruction;
             [DataMember(Name = "contents")] public GeminiContent[] Contents;
             [DataMember(Name = "generationConfig")] public GeminiGenerationConfig GenerationConfig;
         }
@@ -676,6 +701,7 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         [DataContract]
         private sealed class GeminiContent
         {
+            [DataMember(Name = "role", EmitDefaultValue = false)] public string Role;
             [DataMember(Name = "parts")] public GeminiPart[] Parts;
         }
 

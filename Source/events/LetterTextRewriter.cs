@@ -19,6 +19,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis.llm;
@@ -134,14 +135,14 @@ namespace RimTalk_LiteratureExpansion.events
             }, TaskScheduler.Default);
         }
 
-        private static TalkRequest BuildRequest(PendingLetterRewrite record)
+        private static LiteratureLlmRequest BuildRequest(PendingLetterRewrite record)
         {
             if (record == null || record.Initiator == null) return null;
 
             var prompt = BuildPrompt(record.OriginalText);
             var context = BuildContext(record);
 
-            return new TalkRequest(prompt, record.Initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
@@ -201,7 +202,12 @@ Constraints:
             if (!string.IsNullOrWhiteSpace(record.LetterLabel))
                 sb.AppendLine($"Label: {record.LetterLabel}");
             if (!string.IsNullOrWhiteSpace(record.RelatedFaction))
-                sb.AppendLine($"Faction: {record.RelatedFaction}");
+            {
+                sb.AppendLine($"RelatedFaction: {record.RelatedFaction}");
+                sb.AppendLine("RelatedFactionRole: Unknown");
+            }
+            if (Faction.OfPlayer != null)
+                sb.AppendLine($"RecipientFaction: {Faction.OfPlayer.Name}");
             sb.AppendLine("OriginalText:");
             sb.AppendLine(record.OriginalText);
             return sb.ToString().TrimEnd();

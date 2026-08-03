@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Text;
-using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimWorld;
 using UnityEngine;
@@ -14,14 +14,14 @@ namespace RimTalk_LiteratureExpansion.events.letters
         private const int BodyMaxChars = 600;
         private const int TargetTokens = 180;
 
-        public static TalkRequest BuildRequest(Pawn initiator, Faction faction, Map map, string colonyName, int goodwillDelta)
+        public static LiteratureLlmRequest BuildRequest(Faction faction, Map map, string colonyName, int goodwillDelta)
         {
-            if (initiator == null || faction == null) return null;
+            if (faction == null) return null;
 
             var prompt = BuildPrompt(goodwillDelta);
             var context = BuildContext(faction, map, colonyName, goodwillDelta);
 
-            return new TalkRequest(prompt, initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
@@ -40,6 +40,8 @@ Required JSON fields:
 Constraints:
 - title <= {TitleMaxChars} chars.
 - body <= {BodyMaxChars} chars, about {TargetTokens} tokens.
+- SenderFaction is the letter writer. RecipientFaction and RecipientColony are the addressee.
+- Write in SenderFaction's first-person plural voice. Never claim that SenderFaction is RecipientFaction.
 - Mention the alliance and that relations improve by {goodwillDelta}.
 - Use at least one concrete detail from the provided colony or ideology context when available.
 - Keep the tone coherent and grounded; avoid surreal or random content.
@@ -50,19 +52,21 @@ Constraints:
         {
             var sb = new StringBuilder();
             sb.AppendLine("[AllyDiplomacy]");
-            sb.AppendLine($"Faction: {faction.Name}");
+            sb.AppendLine($"SenderFaction: {faction.Name}");
+            if (Faction.OfPlayer != null)
+                sb.AppendLine($"RecipientFaction: {Faction.OfPlayer.Name}");
             if (!string.IsNullOrWhiteSpace(colonyName))
-                sb.AppendLine($"Colony: {colonyName}");
+                sb.AppendLine($"RecipientColony: {colonyName}");
             if (faction.leader != null)
-                sb.AppendLine($"Leader: {faction.leader.LabelShortCap}");
+                sb.AppendLine($"SenderLeader: {faction.leader.LabelShortCap}");
             sb.AppendLine($"GoodwillChange: +{goodwillDelta}");
 
             if (map != null)
             {
                 int colonistCount = map.mapPawns?.FreeColonistsSpawned?.Count ?? 0;
-                sb.AppendLine($"Colonists: {colonistCount}");
+                sb.AppendLine($"RecipientColonists: {colonistCount}");
                 if (map.wealthWatcher != null)
-                    sb.AppendLine($"ColonyWealth: {Mathf.RoundToInt(map.wealthWatcher.WealthTotal)}");
+                    sb.AppendLine($"RecipientColonyWealth: {Mathf.RoundToInt(map.wealthWatcher.WealthTotal)}");
             }
 
             if (ModsConfig.IdeologyActive)
@@ -70,11 +74,11 @@ Constraints:
                 var ideo = Faction.OfPlayer?.ideos?.PrimaryIdeo;
                 if (ideo != null)
                 {
-                    sb.AppendLine($"Ideology: {ideo.name}");
+                    sb.AppendLine($"RecipientIdeology: {ideo.name}");
                     var roles = ideo.RolesListForReading;
                     if (roles != null && roles.Count > 0)
                     {
-                        sb.AppendLine("Roles:");
+                        sb.AppendLine("RecipientIdeologyRoles:");
                         for (int i = 0; i < roles.Count; i++)
                         {
                             var role = roles[i];

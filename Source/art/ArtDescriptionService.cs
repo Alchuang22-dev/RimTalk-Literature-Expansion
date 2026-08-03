@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.art.model;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimTalk_LiteratureExpansion.synopsis;
@@ -25,7 +25,7 @@ namespace RimTalk_LiteratureExpansion.art
             var pawn = contextPawn;
             if (pawn == null) return null;
 
-            var request = new TalkRequest(ArtPromptBuilder.BuildPrompt(meta), pawn)
+            var request = new LiteratureLlmRequest(ArtPromptBuilder.BuildPrompt(meta))
             {
                 Context = ArtPromptBuilder.BuildContext(meta)
             };

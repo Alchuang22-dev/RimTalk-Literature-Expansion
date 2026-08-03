@@ -87,10 +87,14 @@ namespace RimTalk_LiteratureExpansion.synopsis
                         }
                     }
 
-                    if (synopsis == null)
+                    if (synopsis == null && record.Meta.Type != BookType.Journal)
                     {
                         //Log.Message($"[RimTalk LE] Prepare Generating synopsis via LLM for {record.Meta.DefName}.");
                         synopsis = await BookSynopsisService.GetOrGenerateAsync(record.Meta, contextPawn);
+                    }
+                    else if (synopsis == null)
+                    {
+                        Log.Message($"[RimTalk LE] Journal generation failed for {record.Meta.DefName}; generic book fallback suppressed.");
                     }
 
                     if (synopsis != null)

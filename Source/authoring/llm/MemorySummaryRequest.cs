@@ -1,9 +1,8 @@
 /*
  * Purpose:
- * - Helper object to construct a TalkRequest or Query<T> for memory summarization.
+ * - Helper object to construct a standalone LLM request for memory summarization.
  *
  * Uses:
- * - RimTalk TalkRequest
  * - PromptService.BuildContext
  * - IndependentBookLlmClient (independent LLM request)
  *
@@ -23,8 +22,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk.Service;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
@@ -39,7 +38,7 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
         private const string TemplateResourceName =
             "RimTalk_LiteratureExpansion.promptoverride.templates.Prompt_MemorySummary.txt";
 
-        public static TalkRequest BuildRequest(Pawn pawn)
+        public static LiteratureLlmRequest BuildRequest(Pawn pawn)
         {
             if (pawn == null) return null;
 
@@ -56,7 +55,7 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
                 var context = PromptService.BuildContext(new List<Pawn> { pawn });
                 var prompt = BuildPrompt();
 
-                return new TalkRequest(prompt, pawn)
+                return new LiteratureLlmRequest(prompt)
                 {
                     Context = context
                 };
@@ -68,7 +67,7 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
             }
         }
 
-        public static Task<MemorySummarySpec> QueryAsync(TalkRequest request)
+        public static Task<MemorySummarySpec> QueryAsync(LiteratureLlmRequest request)
         {
             if (request == null) return Task.FromResult<MemorySummarySpec>(null);
             return IndependentBookLlmClient.QueryJsonAsync<MemorySummarySpec>(request);

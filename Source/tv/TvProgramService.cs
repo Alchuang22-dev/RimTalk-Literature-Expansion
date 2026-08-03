@@ -1,6 +1,6 @@
 using System.Text;
 using System.Threading.Tasks;
-using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimWorld;
@@ -62,7 +62,7 @@ namespace RimTalk_LiteratureExpansion.tv
             var pawn = contextPawn;
             if (pawn == null) return null;
 
-            var request = new TalkRequest(TvProgramPromptBuilder.BuildPrompt(tvBuilding), pawn)
+            var request = new LiteratureLlmRequest(TvProgramPromptBuilder.BuildPrompt(tvBuilding))
             {
                 Context = TvProgramPromptBuilder.BuildContext(tvBuilding)
             };

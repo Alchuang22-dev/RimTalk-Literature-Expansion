@@ -10,9 +10,9 @@
  */
 using System.Text;
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.book;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
@@ -23,14 +23,14 @@ namespace RimTalk_LiteratureExpansion.journal.llm
 {
     public static class JournalFromSummaryRequest
     {
-        public static TalkRequest BuildRequest(BookMeta meta, MemorySummarySpec summary, Pawn author, string baseContext = null)
+        public static LiteratureLlmRequest BuildRequest(BookMeta meta, MemorySummarySpec summary, Pawn author, string baseContext = null)
         {
             if (summary == null || author == null) return null;
 
             var prompt = BuildPrompt();
             var context = BuildContext(meta, summary, baseContext);
 
-            return new TalkRequest(prompt, author)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
@@ -52,7 +52,7 @@ namespace RimTalk_LiteratureExpansion.journal.llm
             int tokenTarget = GetTokenTarget();
             var settings = LiteratureMod.Settings;
             string template = BuildTemplate(tokenTarget);
-            return PromptTemplateUtil.Resolve(
+            var prompt = PromptTemplateUtil.Resolve(
                 settings?.promptJournal,
                 template,
                 ("LANG", RimTalkConstantShim.Lang),
@@ -60,19 +60,35 @@ namespace RimTalk_LiteratureExpansion.journal.llm
                 ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
                 ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
                 ("TOKEN_TARGET", tokenTarget.ToString()));
+            return ApplyJournalBoundary(prompt);
         }
 
         public static string BuildDefaultPrompt()
         {
             int tokenTarget = GetTokenTarget();
             string template = BuildTemplate(tokenTarget);
-            return PromptTemplateUtil.ApplyTokens(
+            var prompt = PromptTemplateUtil.ApplyTokens(
                 template,
                 ("LANG", RimTalkConstantShim.Lang),
                 ("TITLE_MAX_CHARS", SynopsisTokenPolicy.TitleMaxChars.ToString()),
                 ("SYNOPSIS_MAX_CHARS", SynopsisTokenPolicy.SynopsisMaxChars.ToString()),
                 ("SYNOPSIS_MAX_SENTENCES", SynopsisTokenPolicy.SynopsisMaxSentences.ToString()),
                 ("TOKEN_TARGET", tokenTarget.ToString()));
+            return ApplyJournalBoundary(prompt);
+        }
+
+        private static string ApplyJournalBoundary(string prompt)
+        {
+            const string marker = "[TaskBoundary:Journal]";
+            if (string.IsNullOrWhiteSpace(prompt)) return marker;
+            if (prompt.Contains(marker)) return prompt;
+            return
+$@"{prompt.TrimEnd()}
+
+{marker}
+- This request creates a personal journal entry, never generic book content.
+- The author is the first-person diarist.
+- Use only the supplied pawn context and MemorySummary; do not invent an unrelated story.";
         }
 
         private static string BuildTemplate(int tokenTarget)
@@ -90,6 +106,8 @@ Constraints:
 - Synopsis <= {SynopsisTokenPolicy.SynopsisMaxChars} chars and {SynopsisTokenPolicy.SynopsisMaxSentences} sentences.
 - ""synopsis"" is the diary entry text (about {tokenTarget} tokens), not a summary.
 - Use first-person voice and concrete details from the memory summary.
+- The author is the diarist. Do not write a novel, guide, report, or unrelated fictional story.
+- Every event in the entry must be grounded in the provided pawn context or MemorySummary.
 - Keep it grounded in RimWorld setting; no meta commentary.";
         }
 
@@ -110,8 +128,8 @@ Constraints:
 
             if (meta != null)
             {
-                sb.AppendLine("[Book]");
-                sb.AppendLine($"Type: {meta.Type}");
+                sb.AppendLine("[Journal]");
+                sb.AppendLine($"EntryType: {meta.Type}");
                 if (!string.IsNullOrWhiteSpace(meta.Title))
                     sb.AppendLine($"OriginalTitle: {meta.Title}");
                 if (!string.IsNullOrWhiteSpace(meta.DescriptionDetailed))

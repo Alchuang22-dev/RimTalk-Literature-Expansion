@@ -3,13 +3,13 @@
  * - Build the LLM request for warning quests.
  *
  * Uses:
- * - RimTalk TalkRequest
+ * - Literature Expansion standalone LLM request
  *
  * Responsibilities:
  * - Provide a concise prompt and structured context for LLM output.
  */
 using System.Text;
-using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimWorld;
@@ -27,8 +27,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
         private const int DefaultOfferDays = 3;
         private const int DefaultDeliveryDays = 3;
 
-        public static TalkRequest BuildRequest(
-            Pawn initiator,
+        public static LiteratureLlmRequest BuildRequest(
             Faction faction,
             Settlement settlement,
             Map map,
@@ -36,12 +35,12 @@ namespace RimTalk_LiteratureExpansion.events.quests
             int offerDays,
             int deliveryDays)
         {
-            if (initiator == null || faction == null || settlement == null) return null;
+            if (faction == null || settlement == null) return null;
 
             var prompt = BuildPrompt(offerDays, deliveryDays);
             var context = BuildContext(faction, settlement, map, silverDemand, offerDays, deliveryDays);
 
-            return new TalkRequest(prompt, initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
@@ -51,7 +50,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
         {
             var settings = LiteratureMod.Settings;
             string template = BuildTemplate(offerDays, deliveryDays);
-            return PromptTemplateUtil.Resolve(
+            var prompt = PromptTemplateUtil.Resolve(
                 settings?.promptQuestWarning,
                 template,
                 ("LANG", RimTalkConstantShim.Lang),
@@ -60,12 +59,13 @@ namespace RimTalk_LiteratureExpansion.events.quests
                 ("TARGET_TOKENS", TargetTokens.ToString()),
                 ("OFFER_DAYS", offerDays.ToString()),
                 ("DELIVERY_DAYS", deliveryDays.ToString()));
+            return ApplyIssuerBoundary(prompt);
         }
 
         public static string BuildDefaultPrompt()
         {
             string template = BuildTemplate(DefaultOfferDays, DefaultDeliveryDays);
-            return PromptTemplateUtil.ApplyTokens(
+            var prompt = PromptTemplateUtil.ApplyTokens(
                 template,
                 ("LANG", RimTalkConstantShim.Lang),
                 ("TITLE_MAX_CHARS", TitleMaxChars.ToString()),
@@ -73,6 +73,21 @@ namespace RimTalk_LiteratureExpansion.events.quests
                 ("TARGET_TOKENS", TargetTokens.ToString()),
                 ("OFFER_DAYS", DefaultOfferDays.ToString()),
                 ("DELIVERY_DAYS", DefaultDeliveryDays.ToString()));
+            return ApplyIssuerBoundary(prompt);
+        }
+
+        private static string ApplyIssuerBoundary(string prompt)
+        {
+            const string marker = "[TaskBoundary:QuestIssuer]";
+            if (string.IsNullOrWhiteSpace(prompt)) return marker;
+            if (prompt.Contains(marker)) return prompt;
+            return
+$@"{prompt.TrimEnd()}
+
+{marker}
+- IssuerFaction is the speaker.
+- RecipientFaction and RecipientColony are the addressee.
+- Never swap issuer and recipient identities.";
         }
 
         private static string BuildTemplate(int offerDays, int deliveryDays)
@@ -88,6 +103,8 @@ Required JSON fields:
 Constraints:
 - title <= {TitleMaxChars} chars.
 - description <= {BodyMaxChars} chars, about {TargetTokens} tokens.
+- IssuerFaction is the speaker. RecipientFaction and RecipientColony receive the demand.
+- Write in IssuerFaction's first-person plural voice. Never speak as RecipientFaction.
 - Use the issuer's voice and keep it tense; the description should read like a threat-backed task request, not generic flavor prose.
 - Include a short background or grievance explaining why the faction is demanding payment.
 - Include the demanded silver amount exactly as provided in QuestData.
@@ -108,17 +125,19 @@ Constraints:
         {
             var sb = new StringBuilder();
             sb.AppendLine("[WarningQuest]");
-            sb.AppendLine($"Faction: {faction.Name}");
-            sb.AppendLine($"Settlement: {settlement.LabelCap}");
+            sb.AppendLine($"IssuerFaction: {faction.Name}");
+            sb.AppendLine($"IssuerSettlement: {settlement.LabelCap}");
+            if (Faction.OfPlayer != null)
+                sb.AppendLine($"RecipientFaction: {Faction.OfPlayer.Name}");
             sb.AppendLine($"SilverDemand: {silverDemand}");
             sb.AppendLine($"OfferDays: {offerDays}");
             sb.AppendLine($"DeliveryDays: {deliveryDays}");
             if (map != null)
             {
-                sb.AppendLine($"Colony: {map.info?.parent?.LabelCap ?? "Colony"}");
-                sb.AppendLine($"Colonists: {map.mapPawns?.FreeColonistsSpawned?.Count ?? 0}");
+                sb.AppendLine($"RecipientColony: {map.info?.parent?.LabelCap ?? "Colony"}");
+                sb.AppendLine($"RecipientColonists: {map.mapPawns?.FreeColonistsSpawned?.Count ?? 0}");
                 if (map.wealthWatcher != null)
-                    sb.AppendLine($"Wealth: {Mathf.RoundToInt(map.wealthWatcher.WealthTotal)}");
+                    sb.AppendLine($"RecipientWealth: {Mathf.RoundToInt(map.wealthWatcher.WealthTotal)}");
             }
 
             return sb.ToString().TrimEnd();

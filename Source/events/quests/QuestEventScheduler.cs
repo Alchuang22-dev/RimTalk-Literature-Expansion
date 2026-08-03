@@ -140,7 +140,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
                 return;
             }
 
-            var request = AdvertisementQuestRequest.BuildRequest(initiator, faction, settlement, map, options, OfferDays, DeliveryDays);
+            var request = AdvertisementQuestRequest.BuildRequest(faction, settlement, map, options, OfferDays, DeliveryDays);
             if (request == null)
             {
                 data.NextAdvertQuestTick = tick + RetryTicks;
@@ -220,7 +220,7 @@ namespace RimTalk_LiteratureExpansion.events.quests
             int silverDemand = Mathf.Max(1, Mathf.RoundToInt(map.wealthWatcher?.WealthTotal * WarningDemandWealthFactor ?? 0f));
             float raidPoints = StorytellerUtility.DefaultThreatPointsNow(map) * WarningRaidPointsFactor;
 
-            var request = WarningQuestRequest.BuildRequest(initiator, faction, settlement, map, silverDemand, OfferDays, DeliveryDays);
+            var request = WarningQuestRequest.BuildRequest(faction, settlement, map, silverDemand, OfferDays, DeliveryDays);
             if (request == null)
             {
                 data.NextWarningQuestTick = tick + RetryTicks;

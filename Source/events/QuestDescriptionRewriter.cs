@@ -3,7 +3,7 @@
  * - Append flavor text to quest descriptions via LLM without changing quest logic.
  *
  * Uses:
- * - RimTalk AIService.Query<T> for JSON output.
+ * - Literature Expansion's standalone LLM client for JSON output.
  *
  * Responsibilities:
  * - Queue quest descriptions and append flavor text if it returns before a timeout.
@@ -24,7 +24,9 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using RimTalk.Data;
 using RimTalk.Service;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
+using RimTalk_LiteratureExpansion.synopsis.llm;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -100,13 +102,6 @@ namespace RimTalk_LiteratureExpansion.events
                 return;
             }
 
-            var initiator = TryGetAnyColonist();
-            if (initiator == null)
-            {
-                Log.Message($"{LogPrefix} Skip: no colonist available (id={quest.id}).");
-                return;
-            }
-
             var requiredEntityTokens = new HashSet<string>();
             var optionalEntityTokens = new HashSet<string>();
             CollectEntityTokens(quest, original, requiredEntityTokens, optionalEntityTokens);
@@ -114,9 +109,10 @@ namespace RimTalk_LiteratureExpansion.events
             var numberTokens = ExtractNumberTokens(original);
             var requiredTokens = MergeRequiredTokens(requiredEntityTokens.ToList(), numberTokens);
             var optionalTokens = optionalEntityTokens.OrderByDescending(t => t.Length).ToList();
+            var issuerFaction = TryResolveIssuerFaction(quest);
             var record = new PendingQuestRewrite(
                 quest,
-                initiator,
+                issuerFaction,
                 original,
                 requiredTokens,
                 optionalTokens,
@@ -170,7 +166,7 @@ namespace RimTalk_LiteratureExpansion.events
             record.Requested = true;
             Log.Message($"{LogPrefix} Dispatching LLM request (id={record.QuestId}, def={record.Quest?.root?.defName ?? "null"}).");
 
-            var task = AIService.Query<QuestDescriptionSpec>(request);
+            var task = IndependentBookLlmClient.QueryJsonAsync<QuestDescriptionSpec>(request);
             task.ContinueWith(t =>
             {
                 var spec = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
@@ -180,32 +176,39 @@ namespace RimTalk_LiteratureExpansion.events
             }, TaskScheduler.Default);
         }
 
-        private static TalkRequest BuildRequest(PendingQuestRewrite record)
+        private static LiteratureLlmRequest BuildRequest(PendingQuestRewrite record)
         {
-            if (record == null || record.Initiator == null) return null;
+            if (record == null) return null;
 
-            var prompt = BuildPrompt(record.OriginalDescription);
+            var prompt = BuildPrompt(record.OriginalDescription, record.IssuerFaction != null);
             var context = BuildContext(record);
 
-            return new TalkRequest(prompt, record.Initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
         }
 
-        private static string BuildPrompt(string originalDescription)
+        private static string BuildPrompt(string originalDescription, bool hasKnownIssuer)
         {
             int charLimit = Mathf.Clamp(originalDescription?.Length ?? 0, 240, 520);
+            string voiceRule = hasKnownIssuer
+                ? "IssuerFaction is the speaker. Write in that faction's voice and never speak as RecipientFaction."
+                : "The issuer could not be identified reliably. Use neutral third-person quest prose; do not claim to speak for any faction.";
+            string motiveRule = hasKnownIssuer
+                ? "Explain the issuer's motive only when it is supported by QuestData or OriginalText."
+                : "Describe background only when supported by QuestData or OriginalText; do not invent an issuer or a motive.";
             return
-$@"Write an addendum for a RimWorld quest description in the quest issuer's voice.
+$@"Write an addendum for a RimWorld quest description.
 Write in {RimTalkConstantShim.Lang}. Return JSON only.
 
 Required JSON fields:
 - ""flavor""
 
 Constraints:
-- The text must read like a quest description and background supplement from the issuer, not detached atmosphere prose.
-- Add why the issuer is asking, what led to the situation, and what the request means to them.
+- {voiceRule}
+- {motiveRule}
+- The text must read like a quest description and background supplement, not detached atmosphere prose.
 - Keep the original quest objective, stakes, and tone clear, but do not duplicate the full original text.
 - Use only facts from QuestData and OriginalText; do not invent new rewards, deadlines, counts, locations, or named entities.
 - You may mention required tokens and numbers only when they already appear in QuestData.
@@ -221,6 +224,10 @@ Constraints:
             sb.AppendLine("[QuestDescription]");
             if (!string.IsNullOrWhiteSpace(record.QuestName))
                 sb.AppendLine($"QuestName: {record.QuestName}");
+            if (record.IssuerFaction != null)
+                sb.AppendLine($"IssuerFaction: {record.IssuerFaction.Name}");
+            if (Faction.OfPlayer != null)
+                sb.AppendLine($"RecipientFaction: {Faction.OfPlayer.Name}");
             sb.AppendLine("[QuestData]");
             sb.AppendLine(BuildQuestDataJson(record));
             return sb.ToString().TrimEnd();
@@ -291,18 +298,14 @@ Constraints:
             return description.Resolve().Trim();
         }
 
-        private static Pawn TryGetAnyColonist()
+        private static Faction TryResolveIssuerFaction(Quest quest)
         {
-            var maps = Find.Maps;
-            if (maps == null) return null;
-            for (int i = 0; i < maps.Count; i++)
-            {
-                var map = maps[i];
-                var pawns = map?.mapPawns?.FreeColonistsSpawned;
-                if (pawns == null || pawns.Count == 0) continue;
-                return pawns[0];
-            }
-            return null;
+            if (quest == null) return null;
+            var candidates = quest.InvolvedFactions
+                .Where(faction => faction != null && !faction.IsPlayer)
+                .Distinct()
+                .ToList();
+            return candidates.Count == 1 ? candidates[0] : null;
         }
 
         private static bool ValidateRewrite(string rewritten, PendingQuestRewrite record, out string reason)
@@ -387,7 +390,7 @@ Constraints:
         {
             public int QuestId { get; }
             public Quest Quest { get; }
-            public Pawn Initiator { get; }
+            public Faction IssuerFaction { get; }
             public string QuestName { get; }
             public string OriginalDescription { get; }
             public List<string> RequiredTokens { get; }
@@ -399,7 +402,7 @@ Constraints:
 
             public PendingQuestRewrite(
                 Quest quest,
-                Pawn initiator,
+                Faction issuerFaction,
                 string originalDescription,
                 List<string> requiredTokens,
                 List<string> optionalTokens,
@@ -408,7 +411,7 @@ Constraints:
             {
                 Quest = quest;
                 QuestId = quest?.id ?? -1;
-                Initiator = initiator;
+                IssuerFaction = issuerFaction;
                 QuestName = quest?.name;
                 OriginalDescription = originalDescription ?? string.Empty;
                 RequiredTokens = requiredTokens ?? new List<string>();

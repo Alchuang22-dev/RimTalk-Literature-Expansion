@@ -74,7 +74,8 @@ Constraints:
 - If type is CB_ChildrensBook or CB_ColoringBook: gentle, simple story/activity.
 - If type is VBE_Newspaper: brief news bulletin using any provided time fields.
 - If type is VBE_SkillBook or benefits imply training: practical guide tone.
-- If type is Journal: first-person diary entry style.";
+- If type is Journal: write a first-person personal journal entry, with the pawn as diarist.
+- For Journal content, use only supplied journal or pawn-context facts; never turn it into a guide, novel, report, or unrelated story.";
         }
 
         public static string BuildContext(BookMeta meta)

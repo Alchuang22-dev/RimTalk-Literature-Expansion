@@ -17,7 +17,7 @@
  */
 using System.Text;
 using System.Threading.Tasks;
-using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
@@ -29,14 +29,14 @@ namespace RimTalk_LiteratureExpansion.authoring.llm
 {
     public static class BookFromSummaryRequest
     {
-        public static TalkRequest BuildRequest(BookMeta meta, MemorySummarySpec summary, Pawn author, string baseContext = null)
+        public static LiteratureLlmRequest BuildRequest(BookMeta meta, MemorySummarySpec summary, Pawn author, string baseContext = null)
         {
             if (summary == null || author == null) return null;
 
             var prompt = BuildPrompt();
             var context = BuildContext(meta, summary, baseContext);
 
-            return new TalkRequest(prompt, author)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };

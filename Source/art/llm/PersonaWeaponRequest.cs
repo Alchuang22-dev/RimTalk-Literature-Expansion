@@ -7,9 +7,9 @@
  */
 using System.Text;
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.art.model;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis;
@@ -31,7 +31,7 @@ namespace RimTalk_LiteratureExpansion.art.llm
             return IndependentBookLlmClient.QueryJsonAsync<ArtDescription>(request);
         }
 
-        private static TalkRequest BuildRequest(
+        private static LiteratureLlmRequest BuildRequest(
             ArtMeta meta,
             MemorySummarySpec summary,
             Pawn pawn,
@@ -42,7 +42,7 @@ namespace RimTalk_LiteratureExpansion.art.llm
             var prompt = BuildPrompt();
             var context = BuildContext(meta, summary, baseContext);
 
-            return new TalkRequest(prompt, pawn)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };

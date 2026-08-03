@@ -3,11 +3,11 @@
  * - Orchestrate diary authoring when a pawn writes a journal entry.
  */
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.authoring.llm;
 using RimTalk_LiteratureExpansion.book;
 using RimTalk_LiteratureExpansion.journal.llm;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.model;
 using Verse;
@@ -19,7 +19,7 @@ namespace RimTalk_LiteratureExpansion.journal
         public static async Task<BookSynopsis> GenerateFromSummaryRequestAsync(
             BookMeta meta,
             Pawn author,
-            TalkRequest summaryRequest)
+            LiteratureLlmRequest summaryRequest)
         {
             if (meta == null || author == null || summaryRequest == null) return null;
 

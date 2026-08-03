@@ -7,8 +7,8 @@
  * - BookSynopsisService (optional finalization)
  *
  * Flow:
- * 1) Create a TalkRequest with normal RimTalk context injection.
- * 2) Override prompt to request a structured MemorySummarySpec (JSON).
+ * 1) Build pawn context through RimTalk's context service.
+ * 2) Use a standalone request to obtain a structured MemorySummarySpec (JSON).
  * 3) Feed the summary into a second request to generate book title/synopsis.
  *
  * Design notes:
@@ -20,9 +20,9 @@
  * - Do not write book UI fields here.
  */
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring.llm;
 using RimTalk_LiteratureExpansion.book;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.synopsis;
 using RimTalk_LiteratureExpansion.synopsis.model;
 using Verse;
@@ -44,7 +44,7 @@ namespace RimTalk_LiteratureExpansion.authoring
         public static async Task<BookSynopsis> GenerateFromSummaryRequestAsync(
             BookMeta meta,
             Pawn author,
-            TalkRequest summaryRequest)
+            LiteratureLlmRequest summaryRequest)
         {
             if (meta == null || author == null || summaryRequest == null) return null;
 

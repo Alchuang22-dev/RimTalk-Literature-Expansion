@@ -21,10 +21,10 @@
  * - Do not manage scan scheduling.
  */
 using System.Threading.Tasks;
-using RimTalk.Data;
 using RimTalk_LiteratureExpansion.authoring;
 using RimTalk_LiteratureExpansion.authoring.llm;
 using RimTalk_LiteratureExpansion.book;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.storage;
 using RimTalk_LiteratureExpansion.storage.save;
 using RimTalk_LiteratureExpansion.synopsis.llm;
@@ -49,7 +49,7 @@ namespace RimTalk_LiteratureExpansion.synopsis
             var pawn = contextPawn;
             if (pawn == null) return null;
 
-            var request = new TalkRequest(SynopsisPromptBuilder.BuildPrompt(meta), pawn)
+            var request = new LiteratureLlmRequest(SynopsisPromptBuilder.BuildPrompt(meta))
             {
                 Context = SynopsisPromptBuilder.BuildContext(meta)
             };

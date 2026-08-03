@@ -19,6 +19,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using RimTalk.Data;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimTalk_LiteratureExpansion.settings.util;
 using RimTalk_LiteratureExpansion.synopsis.llm;
@@ -178,13 +179,13 @@ namespace RimTalk_LiteratureExpansion.events
             }, TaskScheduler.Default);
         }
 
-        private static TalkRequest BuildRequest(PendingIdeoRewrite record)
+        private static LiteratureLlmRequest BuildRequest(PendingIdeoRewrite record)
         {
             if (record == null || record.Initiator == null) return null;
             var prompt = BuildPrompt(record.OriginalDescription);
             var context = BuildContext(record);
 
-            return new TalkRequest(prompt, record.Initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };

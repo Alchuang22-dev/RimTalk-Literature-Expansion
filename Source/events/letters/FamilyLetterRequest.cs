@@ -1,6 +1,6 @@
 using System.Text;
-using RimTalk.Data;
 using RimTalk.Service;
+using RimTalk_LiteratureExpansion.llm;
 using RimTalk_LiteratureExpansion.settings;
 using RimWorld;
 using UnityEngine;
@@ -14,20 +14,26 @@ namespace RimTalk_LiteratureExpansion.events.letters
         private const int BodyMaxChars = 700;
         private const int TargetTokens = 220;
 
-        public static TalkRequest BuildRequest(
-            Pawn initiator,
+        public static LiteratureLlmRequest BuildRequest(
             Pawn colonist,
             Pawn relative,
-            string relationLabel,
+            string senderRelationToRecipient,
+            string recipientRelationToSender,
             string giftDefName,
             string giftLabel)
         {
-            if (initiator == null || colonist == null || relative == null) return null;
+            if (colonist == null || relative == null) return null;
 
             var prompt = BuildPrompt();
-            var context = BuildContext(colonist, relative, relationLabel, giftDefName, giftLabel);
+            var context = BuildContext(
+                colonist,
+                relative,
+                senderRelationToRecipient,
+                recipientRelationToSender,
+                giftDefName,
+                giftLabel);
 
-            return new TalkRequest(prompt, initiator)
+            return new LiteratureLlmRequest(prompt)
             {
                 Context = context
             };
@@ -48,7 +54,10 @@ Required JSON fields:
 Constraints:
 - title <= {TitleMaxChars} chars.
 - body <= {BodyMaxChars} chars, about {TargetTokens} tokens.
-- The writer is the Relative; use the provided Relation and names without reversing roles.
+- SenderName is always the writer and RecipientName is always the addressee.
+- SenderRelationToRecipient describes who the sender is to the recipient.
+- RecipientRelationToSender describes who the recipient is to the sender.
+- Write in the sender's first-person voice and address the recipient as ""you"". Never swap either relationship.
 - The gift mentioned in body/giftNote MUST match giftKind exactly.
 - giftKind MUST equal GiftDefName from context.
 - No markdown, no extra keys.";
@@ -57,24 +66,30 @@ Constraints:
         private static string BuildContext(
             Pawn colonist,
             Pawn relative,
-            string relationLabel,
+            string senderRelationToRecipient,
+            string recipientRelationToSender,
             string giftDefName,
             string giftLabel)
         {
             var sb = new StringBuilder();
+            var recipientMap = colonist.MapHeld ?? Find.CurrentMap;
             sb.AppendLine("[FamilyLetter]");
-            sb.AppendLine($"Recipient(Colonist): {colonist.LabelShortCap}");
-            sb.AppendLine($"Writer(Relative): {relative.LabelShortCap}");
-            if (!string.IsNullOrWhiteSpace(relationLabel))
-                sb.AppendLine($"HowRelativeCallsColonist: {relationLabel}");
+            sb.AppendLine($"SenderName: {relative.LabelShortCap}");
+            sb.AppendLine($"RecipientName: {colonist.LabelShortCap}");
+            if (!string.IsNullOrWhiteSpace(senderRelationToRecipient))
+                sb.AppendLine($"SenderRelationToRecipient: {senderRelationToRecipient}");
+            if (!string.IsNullOrWhiteSpace(recipientRelationToSender))
+                sb.AppendLine($"RecipientRelationToSender: {recipientRelationToSender}");
             if (relative.Faction != null)
-                sb.AppendLine($"RelativeFaction: {relative.Faction.Name}");
+                sb.AppendLine($"SenderFaction: {relative.Faction.Name}");
+            if (colonist.Faction != null)
+                sb.AppendLine($"RecipientFaction: {colonist.Faction.Name}");
             if (!string.IsNullOrWhiteSpace(giftDefName))
                 sb.AppendLine($"GiftDefName: {giftDefName}");
             if (!string.IsNullOrWhiteSpace(giftLabel))
                 sb.AppendLine($"GiftLabel: {giftLabel}");
-            sb.AppendLine($"ColonyName: {Find.CurrentMap?.info?.parent?.LabelCap ?? "Colony"}");
-            sb.AppendLine($"ColonyWealth: {Mathf.RoundToInt(Find.CurrentMap?.wealthWatcher?.WealthTotal ?? 0f)}");
+            sb.AppendLine($"RecipientColony: {recipientMap?.info?.parent?.LabelCap ?? "Colony"}");
+            sb.AppendLine($"RecipientColonyWealth: {Mathf.RoundToInt(recipientMap?.wealthWatcher?.WealthTotal ?? 0f)}");
 
             var colonistProfile = PromptService.CreatePawnContext(colonist, PromptService.InfoLevel.Short);
             if (!string.IsNullOrWhiteSpace(colonistProfile))
@@ -86,7 +101,7 @@ Constraints:
             var relativeProfile = PromptService.CreatePawnContext(relative, PromptService.InfoLevel.Short);
             if (!string.IsNullOrWhiteSpace(relativeProfile))
             {
-                sb.AppendLine("[RimTalkProfile:Writer]");
+                sb.AppendLine("[RimTalkProfile:Sender]");
                 sb.AppendLine(relativeProfile);
             }
 
