@@ -193,56 +193,17 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
             var settings = Settings.Get();
             if (settings == null) return false;
 
-            if (settings.UseSimpleConfig)
+            config = settings.GetActiveConfig();
+            if (config == null) return false;
+
+            if (!HasUsableEndpoint(config))
             {
-                if (!string.IsNullOrWhiteSpace(settings.SimpleApiKey))
-                {
-                    config = new ApiConfig
-                    {
-                        ApiKey = settings.SimpleApiKey,
-                        Provider = AIProvider.Google,
-                        SelectedModel = settings.IsUsingFallbackModel ? RimTalkConstantShim.FallbackCloudModel : RimTalkConstantShim.DefaultCloudModel,
-                        IsEnabled = true
-                    };
-                }
-                return config != null;
-            }
-
-            if (settings.UseCloudProviders)
-            {
-                if (settings.CloudConfigs == null || settings.CloudConfigs.Count == 0) return false;
-
-                for (int i = 0; i < settings.CloudConfigs.Count; i++)
-                {
-                    int index = (settings.CurrentCloudConfigIndex + i) % settings.CloudConfigs.Count;
-                    var candidate = settings.CloudConfigs[index];
-                    if (candidate == null || !candidate.IsValid()) continue;
-                    if (!HasUsableEndpoint(candidate))
-                    {
-                        Log.Warning($"[RimTalk LE] Skipping config without endpoint (provider={candidate.Provider}).");
-                        continue;
-                    }
-
-                    settings.CurrentCloudConfigIndex = index;
-                    config = candidate;
-                    return true;
-                }
+                Log.Warning($"[RimTalk LE] Active RimTalk config has no usable endpoint (provider={config.Provider}).");
+                config = null;
                 return false;
             }
 
-            var localConfig = settings.LocalConfig;
-            if (localConfig != null && localConfig.IsValid())
-            {
-                if (!HasUsableEndpoint(localConfig))
-                {
-                    Log.Warning("[RimTalk LE] Local config missing Base URL for independent requests.");
-                    return false;
-                }
-                config = localConfig;
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
         private static bool HasUsableEndpoint(ApiConfig config)
@@ -263,17 +224,10 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
         {
             if (config == null) return string.Empty;
 
-            if ((config.Provider == AIProvider.Local || config.Provider == AIProvider.Custom) &&
-                !string.IsNullOrWhiteSpace(config.CustomModelName))
-                return config.CustomModelName;
-
-            if (string.Equals(config.SelectedModel, "Custom", StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(config.CustomModelName))
-                return config.CustomModelName;
-
-            if (!string.IsNullOrWhiteSpace(config.SelectedModel) &&
-                !string.Equals(config.SelectedModel, RimTalkConstantShim.ChooseModel, StringComparison.OrdinalIgnoreCase))
-                return config.SelectedModel;
+            var model = config.GetEffectiveModelName();
+            if (!string.IsNullOrWhiteSpace(model) &&
+                !string.Equals(model, RimTalkConstantShim.ChooseModel, StringComparison.OrdinalIgnoreCase))
+                return model;
 
             return RimTalkConstantShim.DefaultCloudModel;
         }
@@ -363,6 +317,8 @@ namespace RimTalk_LiteratureExpansion.synopsis.llm
 
             if (string.IsNullOrEmpty(uri.AbsolutePath) || uri.AbsolutePath == "/")
                 return trimmed + "/v1/chat/completions";
+            if (string.Equals(uri.AbsolutePath.TrimEnd('/'), "/v1", StringComparison.OrdinalIgnoreCase))
+                return trimmed + "/chat/completions";
 
             return trimmed;
         }

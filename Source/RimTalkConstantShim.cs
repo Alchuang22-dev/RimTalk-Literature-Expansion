@@ -13,8 +13,8 @@ namespace RimTalk_LiteratureExpansion
 {
     public static class RimTalkConstantShim
     {
-        private const string DefaultCloudModelFallback = "gemma-3-27b-it";
-        private const string FallbackCloudModelFallback = "gemma-3-12b-it";
+        private const string DefaultCloudModelFallback = "gemma-4-26b-a4b-it";
+        private const string FallbackCloudModelFallback = "gemma-4-31b-it";
         private const string ChooseModelFallback = "(choose model)";
         private static readonly Type ConstantType = FindConstantType();
 
